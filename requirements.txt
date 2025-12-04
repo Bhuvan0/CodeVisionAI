@@ -1,0 +1,38 @@
+# CodeVision AI - Requirements
+# LLM-Powered Reverse Engineering Diagram Generator
+
+# Web Framework
+fastapi>=0.104.0
+uvicorn[standard]>=0.24.0
+python-multipart>=0.0.6
+
+# LLM Integration
+langchain>=0.1.0
+langchain-anthropic>=0.1.0
+langchain-openai>=0.1.0
+anthropic>=0.18.0
+openai>=1.12.0
+
+# Static Analysis
+# tree-sitter>=0.20.0  # Optional: for advanced parsing
+# tree-sitter-python>=0.20.0
+# tree-sitter-javascript>=0.20.0
+
+# Visualization
+# graphviz>=0.20  # Python bindings (graphviz system package required)
+
+# Data Processing
+pydantic>=2.5.0
+
+# Optional: Vector Storage for RAG
+# faiss-cpu>=1.7.4
+# chromadb>=0.4.0
+
+# Development
+pytest>=7.4.0
+pytest-asyncio>=0.21.0
+httpx>=0.25.0  # For testing FastAPI
+
+# Optional utilities
+python-dotenv>=1.0.0
+aiofiles>=23.2.0

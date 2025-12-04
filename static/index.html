@@ -1,0 +1,3332 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+    <title>CodeVision AI - Intelligent Code Architecture Visualizer</title>
+    
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Mermaid for diagram rendering -->
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    
+    <!-- D3.js for tree visualization -->
+    <script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
+    
+    <style>
+        :root {
+            --bg-primary: #0a0a0f;
+            --bg-secondary: #12121a;
+            --bg-tertiary: #1a1a25;
+            --bg-card: #16161f;
+            --border-subtle: #2a2a3a;
+            --border-glow: #6366f1;
+            --text-primary: #f0f0f5;
+            --text-secondary: #a0a0b0;
+            --text-muted: #606070;
+            --accent-purple: #8b5cf6;
+            --accent-blue: #3b82f6;
+            --accent-cyan: #06b6d4;
+            --accent-green: #10b981;
+            --accent-orange: #f59e0b;
+            --accent-pink: #ec4899;
+            --gradient-primary: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #a855f7 100%);
+            --gradient-glow: linear-gradient(135deg, rgba(99, 102, 241, 0.15) 0%, rgba(139, 92, 246, 0.15) 100%);
+            --shadow-glow: 0 0 60px rgba(99, 102, 241, 0.15);
+            --font-mono: 'JetBrains Mono', monospace;
+            --font-sans: 'Space Grotesk', sans-serif;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: var(--font-sans);
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* Animated background grid */
+        .bg-grid {
+            position: fixed;
+            inset: 0;
+            background-image: 
+                linear-gradient(rgba(99, 102, 241, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(99, 102, 241, 0.03) 1px, transparent 1px);
+            background-size: 50px 50px;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .bg-glow {
+            position: fixed;
+            width: 600px;
+            height: 600px;
+            background: radial-gradient(circle, rgba(99, 102, 241, 0.08) 0%, transparent 70%);
+            top: -200px;
+            right: -200px;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .bg-glow-2 {
+            position: fixed;
+            width: 500px;
+            height: 500px;
+            background: radial-gradient(circle, rgba(139, 92, 246, 0.06) 0%, transparent 70%);
+            bottom: -150px;
+            left: -150px;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        /* Header */
+        header {
+            position: relative;
+            z-index: 10;
+            padding: 1.5rem 2rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid var(--border-subtle);
+            background: rgba(10, 10, 15, 0.8);
+            backdrop-filter: blur(20px);
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .logo-icon {
+            width: 40px;
+            height: 40px;
+            background: var(--gradient-primary);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+            box-shadow: 0 0 20px rgba(99, 102, 241, 0.3);
+        }
+
+        .logo-text {
+            font-size: 1.5rem;
+            font-weight: 700;
+            background: var(--gradient-primary);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .logo-tag {
+            font-size: 0.7rem;
+            padding: 0.25rem 0.5rem;
+            background: var(--bg-tertiary);
+            border-radius: 4px;
+            color: var(--accent-cyan);
+            font-family: var(--font-mono);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        nav {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .nav-btn {
+            padding: 0.6rem 1.2rem;
+            background: transparent;
+            border: 1px solid var(--border-subtle);
+            border-radius: 8px;
+            color: var(--text-secondary);
+            font-family: var(--font-sans);
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .nav-btn:hover {
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+            border-color: var(--border-glow);
+        }
+
+        .nav-btn.active {
+            background: var(--gradient-glow);
+            border-color: var(--border-glow);
+            color: var(--text-primary);
+        }
+
+        /* Main layout */
+        .app-container {
+            position: relative;
+            z-index: 1;
+            display: grid;
+            grid-template-columns: 320px 1fr 350px;
+            height: calc(100vh - 73px);
+        }
+
+        /* Sidebar */
+        .sidebar {
+            background: var(--bg-secondary);
+            border-right: 1px solid var(--border-subtle);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .sidebar-header {
+            padding: 1.25rem;
+            border-bottom: 1px solid var(--border-subtle);
+        }
+
+        .upload-zone {
+            border: 2px dashed var(--border-subtle);
+            border-radius: 12px;
+            padding: 2rem 1rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            background: var(--bg-tertiary);
+        }
+
+        .upload-zone:hover {
+            border-color: var(--accent-purple);
+            background: rgba(139, 92, 246, 0.05);
+        }
+
+        .upload-zone.dragover {
+            border-color: var(--accent-cyan);
+            background: rgba(6, 182, 212, 0.1);
+            transform: scale(1.02);
+        }
+
+        .upload-icon {
+            font-size: 2.5rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .upload-text {
+            font-size: 0.95rem;
+            color: var(--text-secondary);
+            margin-bottom: 0.5rem;
+        }
+
+        .upload-hint {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            font-family: var(--font-mono);
+        }
+
+        .file-input {
+            display: none;
+        }
+
+        /* Project tree */
+        .project-tree {
+            flex: 1;
+            overflow-y: auto;
+            padding: 1rem;
+        }
+
+        .tree-section {
+            margin-bottom: 1.5rem;
+        }
+
+        .tree-section-title {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text-muted);
+            margin-bottom: 0.75rem;
+            padding: 0 0.5rem;
+        }
+
+        .tree-item {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            padding: 0.6rem 0.75rem;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.15s;
+            margin-bottom: 0.25rem;
+        }
+
+        .tree-item:hover {
+            background: var(--bg-tertiary);
+        }
+
+        .tree-item.selected {
+            background: var(--gradient-glow);
+            border: 1px solid var(--border-glow);
+        }
+
+        .tree-icon {
+            width: 24px;
+            height: 24px;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.75rem;
+            flex-shrink: 0;
+        }
+
+        .tree-icon.module { background: rgba(139, 92, 246, 0.2); color: var(--accent-purple); }
+        .tree-icon.class { background: rgba(16, 185, 129, 0.2); color: var(--accent-green); }
+        .tree-icon.function { background: rgba(245, 158, 11, 0.2); color: var(--accent-orange); }
+        .tree-icon.interface { background: rgba(6, 182, 212, 0.2); color: var(--accent-cyan); }
+
+        .tree-label {
+            flex: 1;
+            font-size: 0.9rem;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .tree-badge {
+            font-size: 0.7rem;
+            padding: 0.15rem 0.4rem;
+            background: var(--bg-primary);
+            border-radius: 4px;
+            color: var(--text-muted);
+            font-family: var(--font-mono);
+        }
+
+        /* Main content area */
+        .diagram-area {
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            background: var(--bg-primary);
+        }
+        
+        .view-panel {
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        .diagram-toolbar {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 0.75rem 1.25rem;
+            border-bottom: 1px solid var(--border-subtle);
+            background: var(--bg-secondary);
+        }
+
+        .toolbar-group {
+            display: flex;
+            gap: 0.25rem;
+        }
+
+        .toolbar-btn {
+            padding: 0.5rem 0.75rem;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-subtle);
+            border-radius: 6px;
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: all 0.15s;
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+
+        .toolbar-btn:hover {
+            background: var(--bg-card);
+            color: var(--text-primary);
+        }
+
+        .toolbar-btn.active {
+            background: var(--accent-purple);
+            border-color: var(--accent-purple);
+            color: white;
+        }
+
+        .toolbar-divider {
+            width: 1px;
+            height: 24px;
+            background: var(--border-subtle);
+            margin: 0 0.5rem;
+        }
+
+        .diagram-container {
+            flex: 1;
+            overflow: hidden;
+            position: relative;
+            background: var(--bg-primary);
+        }
+
+        .diagram-viewport {
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            cursor: grab;
+            padding: 2rem;
+        }
+        
+        .diagram-viewport:active {
+            cursor: grabbing;
+        }
+
+        .diagram-wrapper {
+            background: var(--bg-secondary);
+            border-radius: 16px;
+            padding: 2rem;
+            border: 1px solid var(--border-subtle);
+            min-width: fit-content;
+            display: inline-block;
+            box-shadow: var(--shadow-glow);
+            transform-origin: center center;
+            transition: transform 0.1s ease-out;
+        }
+
+        .mermaid {
+            display: flex;
+            justify-content: center;
+        }
+        
+        .mermaid svg {
+            max-width: none !important;
+            height: auto !important;
+        }
+        
+        /* Zoom controls floating */
+        .zoom-controls {
+            position: absolute;
+            bottom: 1.5rem;
+            right: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            z-index: 10;
+        }
+        
+        .zoom-btn {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-subtle);
+            color: var(--text-primary);
+            font-size: 1.2rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        }
+        
+        .zoom-btn:hover {
+            background: var(--accent-purple);
+            border-color: var(--accent-purple);
+            transform: scale(1.05);
+        }
+        
+        .zoom-level {
+            text-align: center;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            background: var(--bg-secondary);
+            padding: 0.25rem 0.5rem;
+            border-radius: 6px;
+            border: 1px solid var(--border-subtle);
+        }
+        
+        /* Fullscreen button */
+        .fullscreen-btn {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            z-index: 10;
+        }
+        
+        /* Minimap */
+        .diagram-minimap {
+            position: absolute;
+            bottom: 1.5rem;
+            left: 1.5rem;
+            width: 150px;
+            height: 100px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-subtle);
+            border-radius: 8px;
+            overflow: hidden;
+            z-index: 10;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        }
+        
+        .minimap-content {
+            width: 100%;
+            height: 100%;
+            transform: scale(0.1);
+            transform-origin: top left;
+            pointer-events: none;
+        }
+        
+        .minimap-viewport {
+            position: absolute;
+            border: 2px solid var(--accent-purple);
+            background: rgba(139, 92, 246, 0.1);
+            pointer-events: none;
+        }
+
+        /* Empty state */
+        .empty-state {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 4rem 2rem;
+            text-align: center;
+        }
+
+        .empty-icon {
+            font-size: 4rem;
+            margin-bottom: 1.5rem;
+            opacity: 0.5;
+        }
+
+        .empty-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: var(--text-primary);
+        }
+
+        .empty-desc {
+            color: var(--text-secondary);
+            max-width: 400px;
+            line-height: 1.6;
+        }
+
+        /* Detail panel */
+        .detail-panel {
+            background: var(--bg-secondary);
+            border-left: 1px solid var(--border-subtle);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .detail-header {
+            padding: 1.25rem;
+            border-bottom: 1px solid var(--border-subtle);
+        }
+
+        .detail-title {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text-muted);
+            margin-bottom: 0.5rem;
+        }
+
+        .detail-name {
+            font-size: 1.25rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .detail-type-badge {
+            font-size: 0.7rem;
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+            text-transform: uppercase;
+            font-weight: 500;
+        }
+
+        .detail-type-badge.class { background: rgba(16, 185, 129, 0.2); color: var(--accent-green); }
+        .detail-type-badge.module { background: rgba(139, 92, 246, 0.2); color: var(--accent-purple); }
+
+        .detail-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 1.25rem;
+        }
+
+        .detail-section {
+            margin-bottom: 1.5rem;
+        }
+
+        .detail-section-title {
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+            margin-bottom: 0.75rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .summary-text {
+            font-size: 0.95rem;
+            line-height: 1.7;
+            color: var(--text-secondary);
+            padding: 1rem;
+            background: var(--bg-tertiary);
+            border-radius: 10px;
+            border-left: 3px solid var(--accent-purple);
+        }
+
+        .method-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .method-item {
+            padding: 0.75rem;
+            background: var(--bg-tertiary);
+            border-radius: 8px;
+            font-family: var(--font-mono);
+            font-size: 0.85rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .method-visibility {
+            font-size: 0.75rem;
+            padding: 0.1rem 0.3rem;
+            border-radius: 3px;
+            background: var(--bg-primary);
+        }
+
+        .method-visibility.public { color: var(--accent-green); }
+        .method-visibility.private { color: var(--accent-orange); }
+
+        .dependency-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+
+        .dependency-tag {
+            padding: 0.4rem 0.75rem;
+            background: var(--bg-tertiary);
+            border-radius: 6px;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            border: 1px solid var(--border-subtle);
+            transition: all 0.15s;
+        }
+
+        .dependency-tag:hover {
+            border-color: var(--accent-cyan);
+            color: var(--accent-cyan);
+        }
+
+        /* Loading spinner */
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid var(--border-subtle);
+            border-top-color: var(--accent-purple);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .loading-state {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .loading-text {
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+        }
+
+        /* Tree/Graph visualization styles */
+        .graph-container {
+            width: 100%;
+            height: 100%;
+            position: relative;
+        }
+        
+        .graph-svg {
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle at 50% 50%, #1a1a25 0%, #0a0a0f 100%);
+        }
+        
+        .graph-node {
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        
+        .graph-node:hover {
+            filter: brightness(1.2);
+        }
+        
+        .graph-node circle {
+            stroke-width: 3px;
+            filter: drop-shadow(0 0 8px rgba(99, 102, 241, 0.5));
+        }
+        
+        .graph-node.module circle {
+            fill: #6366f1;
+            stroke: #8b5cf6;
+        }
+        
+        .graph-node.class circle {
+            fill: #10b981;
+            stroke: #059669;
+        }
+        
+        .graph-node.function circle {
+            fill: #f59e0b;
+            stroke: #d97706;
+        }
+        
+        .graph-node.interface circle {
+            fill: #06b6d4;
+            stroke: #0891b2;
+        }
+        
+        .graph-node.external circle {
+            fill: #6b7280;
+            stroke: #4b5563;
+        }
+        
+        .graph-node text {
+            fill: #f0f0f5;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11px;
+            pointer-events: none;
+        }
+        
+        .graph-node .node-icon {
+            font-size: 14px;
+            dominant-baseline: middle;
+            text-anchor: middle;
+        }
+        
+        .graph-link {
+            fill: none;
+            stroke: #6366f1;
+            stroke-width: 2px;
+            stroke-opacity: 0.6;
+        }
+        
+        .graph-link.inheritance {
+            stroke: #10b981;
+            stroke-dasharray: none;
+        }
+        
+        .graph-link.dependency {
+            stroke: #6366f1;
+            stroke-dasharray: 5,5;
+            stroke-opacity: 0.4;
+        }
+        
+        .graph-link.contains {
+            stroke: #8b5cf6;
+            stroke-opacity: 0.3;
+        }
+        
+        .node-tooltip {
+            position: absolute;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-glow);
+            border-radius: 8px;
+            padding: 0.75rem 1rem;
+            pointer-events: none;
+            z-index: 100;
+            max-width: 300px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+        }
+        
+        .node-tooltip h4 {
+            color: var(--text-primary);
+            margin: 0 0 0.5rem;
+            font-size: 0.9rem;
+        }
+        
+        .node-tooltip p {
+            color: var(--text-secondary);
+            margin: 0;
+            font-size: 0.8rem;
+        }
+        
+        /* View mode toggle */
+        .view-mode-toggle {
+            display: flex;
+            gap: 0.25rem;
+            background: var(--bg-tertiary);
+            padding: 0.25rem;
+            border-radius: 8px;
+        }
+        
+        .view-mode-btn {
+            padding: 0.4rem 0.75rem;
+            background: transparent;
+            border: none;
+            border-radius: 6px;
+            color: var(--text-muted);
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .view-mode-btn.active {
+            background: var(--accent-purple);
+            color: white;
+        }
+        
+        .view-mode-btn:hover:not(.active) {
+            color: var(--text-primary);
+        }
+
+        /* Chat panel styles */
+        .chat-panel {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+        
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 1rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+        
+        .chat-message {
+            max-width: 85%;
+            padding: 0.75rem 1rem;
+            border-radius: 12px;
+            font-size: 0.9rem;
+            line-height: 1.5;
+        }
+        
+        .chat-message.user {
+            background: var(--accent-purple);
+            color: white;
+            align-self: flex-end;
+            border-bottom-right-radius: 4px;
+        }
+        
+        .chat-message.assistant {
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+            align-self: flex-start;
+            border-bottom-left-radius: 4px;
+            border: 1px solid var(--border-subtle);
+        }
+        
+        .chat-message.assistant code {
+            background: var(--bg-primary);
+            padding: 0.15rem 0.4rem;
+            border-radius: 4px;
+            font-family: var(--font-mono);
+            font-size: 0.85rem;
+        }
+        
+        .chat-message.assistant strong {
+            color: var(--accent-cyan);
+        }
+        
+        .chat-input-container {
+            padding: 1rem;
+            border-top: 1px solid var(--border-subtle);
+            background: var(--bg-secondary);
+        }
+        
+        .chat-input-wrapper {
+            display: flex;
+            gap: 0.5rem;
+        }
+        
+        .chat-input {
+            flex: 1;
+            padding: 0.75rem 1rem;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-subtle);
+            border-radius: 8px;
+            color: var(--text-primary);
+            font-family: var(--font-sans);
+            font-size: 0.9rem;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        
+        .chat-input:focus {
+            border-color: var(--accent-purple);
+        }
+        
+        .chat-input::placeholder {
+            color: var(--text-muted);
+        }
+        
+        .chat-send-btn {
+            padding: 0.75rem 1.25rem;
+            background: var(--accent-purple);
+            border: none;
+            border-radius: 8px;
+            color: white;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        
+        .chat-send-btn:hover {
+            background: var(--accent-blue);
+        }
+        
+        .chat-send-btn:disabled {
+            background: var(--bg-tertiary);
+            color: var(--text-muted);
+            cursor: not-allowed;
+        }
+        
+        .chat-typing {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1rem;
+            background: var(--bg-tertiary);
+            border-radius: 12px;
+            border-bottom-left-radius: 4px;
+            align-self: flex-start;
+            color: var(--text-muted);
+            font-size: 0.85rem;
+        }
+        
+        .chat-typing .dots {
+            display: flex;
+            gap: 0.25rem;
+        }
+        
+        .chat-typing .dot {
+            width: 6px;
+            height: 6px;
+            background: var(--text-muted);
+            border-radius: 50%;
+            animation: bounce 1.4s infinite ease-in-out both;
+        }
+        
+        .chat-typing .dot:nth-child(1) { animation-delay: -0.32s; }
+        .chat-typing .dot:nth-child(2) { animation-delay: -0.16s; }
+        
+        @keyframes bounce {
+            0%, 80%, 100% { transform: scale(0); }
+            40% { transform: scale(1); }
+        }
+
+        /* Scrollbar styling */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--bg-secondary);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--border-subtle);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--text-muted);
+        }
+
+        /* Status bar */
+        .status-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0.5rem 1.25rem;
+            background: var(--bg-tertiary);
+            border-top: 1px solid var(--border-subtle);
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        .status-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--accent-green);
+        }
+
+        .status-dot.analyzing {
+            background: var(--accent-orange);
+            animation: pulse 1s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        /* Light theme */
+        .light-theme {
+            --bg-primary: #f8fafc;
+            --bg-secondary: #ffffff;
+            --bg-tertiary: #f1f5f9;
+            --bg-card: #ffffff;
+            --border-subtle: #e2e8f0;
+            --border-glow: #6366f1;
+            --text-primary: #1e293b;
+            --text-secondary: #475569;
+            --text-muted: #94a3b8;
+        }
+        
+        .light-theme .graph-svg {
+            background: radial-gradient(circle at 50% 50%, #f1f5f9 0%, #e2e8f0 100%);
+        }
+        
+        .light-theme .bg-grid {
+            background-image: 
+                linear-gradient(rgba(99, 102, 241, 0.08) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(99, 102, 241, 0.08) 1px, transparent 1px);
+        }
+        
+        /* Metrics dashboard */
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        .metric-card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-subtle);
+            border-radius: 12px;
+            padding: 1.25rem;
+            text-align: center;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        
+        .metric-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.2);
+        }
+        
+        .metric-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            background: var(--gradient-primary);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .metric-label {
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+            margin-top: 0.25rem;
+        }
+        
+        .metric-change {
+            font-size: 0.75rem;
+            margin-top: 0.5rem;
+        }
+        
+        .metric-change.positive { color: var(--accent-green); }
+        .metric-change.negative { color: var(--accent-pink); }
+        
+        /* Progress bars */
+        .progress-bar {
+            height: 8px;
+            background: var(--bg-tertiary);
+            border-radius: 4px;
+            overflow: hidden;
+            margin-top: 0.5rem;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: var(--gradient-primary);
+            border-radius: 4px;
+            transition: width 0.5s ease-out;
+        }
+        
+        /* History modal */
+        .history-list {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        
+        .history-item {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1rem;
+            background: var(--bg-tertiary);
+            border-radius: 8px;
+            margin-bottom: 0.5rem;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        
+        .history-item:hover {
+            background: var(--bg-card);
+            border: 1px solid var(--border-glow);
+        }
+        
+        .history-icon {
+            font-size: 1.5rem;
+        }
+        
+        .history-info {
+            flex: 1;
+        }
+        
+        .history-name {
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+        
+        .history-meta {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+        
+        /* Code quality score ring */
+        .quality-ring {
+            width: 120px;
+            height: 120px;
+            position: relative;
+            margin: 0 auto 1rem;
+        }
+        
+        .quality-ring svg {
+            transform: rotate(-90deg);
+        }
+        
+        .quality-ring circle {
+            fill: none;
+            stroke-width: 8;
+        }
+        
+        .quality-ring .bg {
+            stroke: var(--bg-tertiary);
+        }
+        
+        .quality-ring .progress {
+            stroke: var(--accent-green);
+            stroke-linecap: round;
+            transition: stroke-dashoffset 1s ease-out;
+        }
+        
+        .quality-score {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        /* Toast notifications */
+        .toast-container {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .toast {
+            padding: 1rem 1.5rem;
+            background: var(--bg-card);
+            border: 1px solid var(--border-subtle);
+            border-radius: 10px;
+            color: var(--text-primary);
+            font-size: 0.9rem;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        .toast.success { border-left: 3px solid var(--accent-green); }
+        .toast.error { border-left: 3px solid var(--accent-pink); }
+        .toast.info { border-left: 3px solid var(--accent-cyan); }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(100px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        /* Modal */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(4px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.2s;
+        }
+
+        .modal-overlay.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .modal {
+            background: var(--bg-secondary);
+            border-radius: 16px;
+            border: 1px solid var(--border-subtle);
+            max-width: 600px;
+            width: 90%;
+            max-height: 80vh;
+            overflow: hidden;
+            transform: scale(0.95);
+            transition: transform 0.2s;
+        }
+
+        .modal-overlay.active .modal {
+            transform: scale(1);
+        }
+
+        .modal-header {
+            padding: 1.25rem 1.5rem;
+            border-bottom: 1px solid var(--border-subtle);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .modal-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            font-size: 1.5rem;
+            cursor: pointer;
+            transition: color 0.15s;
+        }
+
+        .modal-close:hover {
+            color: var(--text-primary);
+        }
+
+        .modal-body {
+            padding: 1.5rem;
+            overflow-y: auto;
+            max-height: 60vh;
+        }
+
+        /* Code block */
+        .code-block {
+            background: var(--bg-primary);
+            border-radius: 8px;
+            padding: 1rem;
+            font-family: var(--font-mono);
+            font-size: 0.85rem;
+            overflow-x: auto;
+            border: 1px solid var(--border-subtle);
+        }
+
+        /* Responsive */
+        @media (max-width: 1200px) {
+            .app-container {
+                grid-template-columns: 280px 1fr;
+            }
+            .detail-panel {
+                display: none;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .app-container {
+                grid-template-columns: 1fr;
+            }
+            .sidebar {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="bg-grid"></div>
+    <div class="bg-glow"></div>
+    <div class="bg-glow-2"></div>
+
+    <header>
+        <div class="logo">
+            <div class="logo-icon">🔮</div>
+            <span class="logo-text">CodeVision AI</span>
+            <span class="logo-tag">v1.0</span>
+        </div>
+        <nav>
+            <button class="nav-btn active" data-view="diagram">📊 Diagram</button>
+            <button class="nav-btn" data-view="code">📝 Code</button>
+            <button class="nav-btn" data-view="insights">💡 Insights</button>
+            <button class="nav-btn" data-view="metrics">📈 Metrics</button>
+        </nav>
+        <div style="display: flex; align-items: center; gap: 0.75rem;">
+            <button id="historyBtn" class="nav-btn" title="Project History">🕐</button>
+            <button id="themeToggle" class="nav-btn" title="Toggle Theme">🌙</button>
+        </div>
+    </header>
+
+    <div class="app-container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <!-- Tab buttons for upload methods -->
+                <div class="upload-tabs" style="display: flex; margin-bottom: 0.75rem; background: var(--bg-tertiary); border-radius: 8px; padding: 0.25rem;">
+                    <button class="upload-tab-btn active" data-upload-tab="local" style="flex: 1; padding: 0.5rem; background: var(--accent-purple); border: none; border-radius: 6px; color: white; font-size: 0.75rem; cursor: pointer;">📂 Local</button>
+                    <button class="upload-tab-btn" data-upload-tab="github" style="flex: 1; padding: 0.5rem; background: transparent; border: none; border-radius: 6px; color: var(--text-muted); font-size: 0.75rem; cursor: pointer;">🐙 GitHub</button>
+                </div>
+                
+                <!-- Local upload panel -->
+                <div class="upload-panel" id="localUploadPanel">
+                <div class="upload-zone" id="uploadZone">
+                    <div class="upload-icon">📁</div>
+                    <div class="upload-text">Drop your project here</div>
+                        <div class="upload-hint">Click to select folder or files</div>
+                        <input type="file" class="file-input" id="fileInput" multiple accept=".py,.js,.ts,.jsx,.tsx,.java,.go,.rs,.rb,.php,.cs,.kt,.swift,.c,.cpp,.h,.hpp,.vue,.zip" />
+                        <input type="file" class="file-input" id="folderInput" webkitdirectory directory multiple />
+                    </div>
+                    <div class="upload-buttons" style="display: flex; gap: 0.5rem; margin-top: 0.75rem;">
+                        <button class="upload-btn" id="selectFilesBtn" style="flex: 1; padding: 0.5rem; background: var(--bg-tertiary); border: 1px solid var(--border-subtle); border-radius: 6px; color: var(--text-secondary); cursor: pointer; font-size: 0.8rem;">📄 Files</button>
+                        <button class="upload-btn" id="selectFolderBtn" style="flex: 1; padding: 0.5rem; background: var(--accent-purple); border: none; border-radius: 6px; color: white; cursor: pointer; font-size: 0.8rem;">📂 Folder</button>
+                    </div>
+                </div>
+                
+                <!-- GitHub import panel -->
+                <div class="upload-panel" id="githubUploadPanel" style="display: none;">
+                    <div style="text-align: center; padding: 1rem;">
+                        <div style="font-size: 2rem; margin-bottom: 0.5rem;">🐙</div>
+                        <div style="color: var(--text-secondary); font-size: 0.85rem; margin-bottom: 1rem;">Import from GitHub</div>
+                        <input type="text" id="githubUrlInput" placeholder="https://github.com/user/repo" style="width: 100%; padding: 0.75rem; background: var(--bg-tertiary); border: 1px solid var(--border-subtle); border-radius: 8px; color: var(--text-primary); font-size: 0.85rem; margin-bottom: 0.75rem;">
+                        <button id="githubImportBtn" style="width: 100%; padding: 0.75rem; background: var(--accent-purple); border: none; border-radius: 8px; color: white; font-size: 0.85rem; cursor: pointer;">🚀 Analyze Repository</button>
+                        <div style="font-size: 0.7rem; color: var(--text-muted); margin-top: 0.5rem;">Public repositories only</div>
+                    </div>
+                </div>
+            </div>
+            <div class="project-tree" id="projectTree">
+                <div class="tree-section">
+                    <div class="tree-section-title">Modules</div>
+                    <div id="modulesList"></div>
+                </div>
+                <div class="tree-section">
+                    <div class="tree-section-title">Classes</div>
+                    <div id="classesList"></div>
+                </div>
+                <div class="tree-section">
+                    <div class="tree-section-title">Functions</div>
+                    <div id="functionsList"></div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main content area -->
+        <main class="diagram-area">
+            <!-- DIAGRAM VIEW -->
+            <div class="view-panel" id="diagramView">
+            <div class="diagram-toolbar">
+                <div class="view-mode-toggle">
+                    <button class="view-mode-btn active" data-view-mode="tree">🌳 Tree</button>
+                    <button class="view-mode-btn" data-view-mode="mermaid">📊 UML</button>
+                </div>
+                <div class="toolbar-divider"></div>
+                <div class="toolbar-group">
+                    <button class="toolbar-btn active" data-diagram="class">📐 Class</button>
+                    <button class="toolbar-btn" data-diagram="dependency">🔗 Deps</button>
+                    <button class="toolbar-btn" data-diagram="component">📦 Modules</button>
+                </div>
+                <div class="toolbar-divider"></div>
+                <button class="toolbar-btn" id="exportBtn">📥 Export</button>
+            </div>
+            <div class="diagram-container" id="diagramContainer">
+                <div class="empty-state" id="emptyState">
+                    <div class="empty-icon">🔍</div>
+                    <h2 class="empty-title">No Project Loaded</h2>
+                    <p class="empty-desc">
+                        Upload a project folder or files to visualize its architecture. 
+                        CodeVision AI will analyze the code structure and generate interactive diagrams.
+                    </p>
+                </div>
+                
+                <!-- Tree/Graph Visualization -->
+                <div class="graph-container" id="graphContainer" style="display: none;">
+                    <svg class="graph-svg" id="graphSvg"></svg>
+                </div>
+                
+                <!-- Mermaid Diagram -->
+                <div class="diagram-viewport" id="diagramViewport" style="display: none;">
+                    <div class="diagram-wrapper" id="diagramWrapper">
+                    <div class="mermaid" id="mermaidDiagram"></div>
+                </div>
+                </div>
+                
+                <!-- Node Tooltip -->
+                <div class="node-tooltip" id="nodeTooltip" style="display: none;"></div>
+                
+                <!-- Floating zoom controls -->
+                <div class="zoom-controls" id="zoomControls" style="display: none;">
+                    <button class="zoom-btn" id="zoomInBtn" title="Zoom In">+</button>
+                    <div class="zoom-level" id="zoomLevel">100%</div>
+                    <button class="zoom-btn" id="zoomOutBtn" title="Zoom Out">−</button>
+                    <button class="zoom-btn" id="zoomResetBtn" title="Reset Zoom">⟲</button>
+                    <button class="zoom-btn" id="zoomFitBtn" title="Fit to View">⛶</button>
+                </div>
+                
+                <!-- Fullscreen button -->
+                <button class="zoom-btn fullscreen-btn" id="fullscreenBtn" title="Toggle Fullscreen" style="display: none;">⛶</button>
+            </div>
+            <div class="status-bar">
+                <div class="status-item">
+                    <span class="status-dot" id="statusDot"></span>
+                    <span id="statusText">Ready</span>
+                </div>
+                <div class="status-item">
+                    <span id="statsText">No project loaded</span>
+                </div>
+            </div>
+            </div>
+            
+            <!-- CODE VIEW -->
+            <div class="view-panel" id="codeView" style="display: none;">
+                <div class="diagram-toolbar">
+                    <span style="color: var(--text-secondary); font-size: 0.9rem;">📝 Source Code Browser</span>
+                </div>
+                <div class="code-view-container" style="flex: 1; overflow: auto; padding: 1rem;">
+                    <div id="codeFilesList" style="display: flex; flex-direction: column; gap: 1rem;"></div>
+                </div>
+            </div>
+            
+            <!-- INSIGHTS VIEW -->
+            <div class="view-panel" id="insightsView" style="display: none;">
+                <div class="diagram-toolbar">
+                    <span style="color: var(--text-secondary); font-size: 0.9rem;">💡 AI-Powered Insights</span>
+                </div>
+                <div class="insights-container" style="flex: 1; overflow: auto; padding: 1.5rem;">
+                    <div id="insightsContent">
+                        <div class="empty-state">
+                            <div class="empty-icon">💡</div>
+                            <h2 class="empty-title">No Insights Yet</h2>
+                            <p class="empty-desc">Upload a project to see AI-generated architectural insights and recommendations.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- METRICS VIEW -->
+            <div class="view-panel" id="metricsView" style="display: none;">
+                <div class="diagram-toolbar">
+                    <span style="color: var(--text-secondary); font-size: 0.9rem;">📈 Code Metrics Dashboard</span>
+                    <div style="margin-left: auto;">
+                        <button class="toolbar-btn" id="exportMetricsBtn">📥 Export Report</button>
+                    </div>
+                </div>
+                <div style="flex: 1; overflow: auto; padding: 1.5rem;">
+                    <div id="metricsContent">
+                        <div class="empty-state">
+                            <div class="empty-icon">📈</div>
+                            <h2 class="empty-title">No Metrics Yet</h2>
+                            <p class="empty-desc">Upload a project to see code quality metrics and analysis.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- Detail panel with tabs -->
+        <aside class="detail-panel" id="detailPanel">
+            <div class="detail-header" style="padding: 0;">
+                <div style="display: flex; border-bottom: 1px solid var(--border-subtle);">
+                    <button class="detail-tab active" data-detail-tab="info" style="flex: 1; padding: 0.75rem; background: transparent; border: none; color: var(--text-primary); cursor: pointer; font-size: 0.85rem; border-bottom: 2px solid var(--accent-purple);">📋 Info</button>
+                    <button class="detail-tab" data-detail-tab="chat" style="flex: 1; padding: 0.75rem; background: transparent; border: none; color: var(--text-muted); cursor: pointer; font-size: 0.85rem; border-bottom: 2px solid transparent;">💬 Chat</button>
+                </div>
+            </div>
+            
+            <!-- Info Tab -->
+            <div class="detail-tab-content" id="infoTab">
+                <div style="padding: 1rem; border-bottom: 1px solid var(--border-subtle);">
+                <div class="detail-title">Selected Element</div>
+                <div class="detail-name" id="detailName">
+                    <span>Select an item</span>
+                </div>
+            </div>
+            <div class="detail-content" id="detailContent">
+                <div class="detail-section">
+                    <div class="detail-section-title">📝 AI Summary</div>
+                    <div class="summary-text" id="summaryText">
+                        Select a module, class, or function from the sidebar to view its AI-generated summary and details.
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Chat Tab -->
+            <div class="detail-tab-content chat-panel" id="chatTab" style="display: none;">
+                <div class="chat-messages" id="chatMessages">
+                    <div class="chat-message assistant">
+                        👋 Hi! I'm your AI assistant. Upload a project and ask me anything about its code structure, classes, functions, or architecture!
+                    </div>
+                </div>
+                <div class="chat-input-container">
+                    <div class="chat-input-wrapper">
+                        <input type="text" class="chat-input" id="chatInput" placeholder="Ask about your project..." disabled>
+                        <button class="chat-send-btn" id="chatSendBtn" disabled>Send</button>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 0.5rem;">
+                        <div style="font-size: 0.7rem; color: var(--text-muted);" id="chatHint">
+                            Upload a project to start chatting
+                        </div>
+                        <div style="font-size: 0.7rem; color: var(--accent-green); display: none;" id="modelIndicator">
+                            ● <span id="modelName">AI</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </aside>
+    </div>
+
+    <!-- Toast container -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <!-- History modal -->
+    <div class="modal-overlay" id="historyModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 class="modal-title">🕐 Project History</h3>
+                <button class="modal-close" onclick="document.getElementById('historyModal').classList.remove('active')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="history-list" id="historyList">
+                    <div style="text-align: center; color: var(--text-muted); padding: 2rem;">
+                        No projects analyzed yet
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Export modal -->
+    <div class="modal-overlay" id="exportModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 class="modal-title">Export Diagram</h3>
+                <button class="modal-close" id="closeModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="detail-section">
+                    <div class="detail-section-title">PlantUML Code</div>
+                    <div class="code-block" id="plantumlCode"></div>
+                </div>
+                <div class="detail-section">
+                    <div class="detail-section-title">Mermaid Code</div>
+                    <div class="code-block" id="mermaidCode"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Initialize Mermaid with enhanced styling
+        mermaid.initialize({
+            startOnLoad: false,
+            theme: 'dark',
+            securityLevel: 'loose',
+            suppressErrorRendering: true,
+            fontFamily: 'JetBrains Mono, monospace',
+            themeVariables: {
+                // Colors
+                primaryColor: '#6366f1',
+                primaryTextColor: '#f0f0f5',
+                primaryBorderColor: '#8b5cf6',
+                lineColor: '#6366f1',
+                secondaryColor: '#1e1e2e',
+                tertiaryColor: '#16161f',
+                background: '#12121a',
+                mainBkg: '#1e1e2e',
+                secondBkg: '#16161f',
+                
+                // Class diagram specific
+                classText: '#f0f0f5',
+                
+                // Node styling
+                nodeBorder: '#8b5cf6',
+                nodeTextColor: '#f0f0f5',
+                
+                // Cluster/subgraph
+                clusterBkg: '#1a1a25',
+                clusterBorder: '#6366f1',
+                
+                // Edges
+                defaultLinkColor: '#6366f1',
+                edgeLabelBackground: '#1e1e2e',
+                
+                // Text
+                titleColor: '#f0f0f5',
+                textColor: '#f0f0f5',
+                fontSize: '14px',
+                
+                // Special colors for different elements
+                actorBkg: '#6366f1',
+                actorBorder: '#8b5cf6',
+                actorTextColor: '#f0f0f5',
+                signalColor: '#6366f1',
+                labelBoxBkgColor: '#1e1e2e',
+                labelBoxBorderColor: '#6366f1'
+            },
+            flowchart: {
+                curve: 'basis',
+                padding: 25,
+                htmlLabels: true,
+                nodeSpacing: 50,
+                rankSpacing: 80,
+                diagramPadding: 20
+            },
+            class: {
+                useMaxWidth: false,
+                defaultRenderer: 'dagre-wrapper'
+            },
+            er: {
+                useMaxWidth: false
+            },
+            sequence: {
+                useMaxWidth: false,
+                diagramMarginX: 50,
+                diagramMarginY: 30,
+                actorMargin: 80,
+                width: 180,
+                height: 65
+            }
+        });
+
+        // App state
+        const state = {
+            projectId: null,
+            projectName: null,
+            projectSource: null,
+            modules: [],
+            classes: [],
+            functions: [],
+            dependencies: [],
+            summaries: {},
+            currentDiagram: null,
+            selectedItem: null,
+            diagramType: 'class',
+            viewMode: 'tree',  // 'tree' or 'mermaid'
+            zoom: 1.0,  // Initialize as float
+            simulation: null
+        };
+        
+        // Graph visualization with D3.js
+        const graphConfig = {
+            nodeRadius: 25,
+            linkDistance: 120,
+            chargeStrength: -400,
+            centerForce: 0.1
+        };
+
+        // API base URL
+        const API_URL = window.location.origin;
+
+        // DOM elements
+        const elements = {
+            uploadZone: document.getElementById('uploadZone'),
+            fileInput: document.getElementById('fileInput'),
+            modulesList: document.getElementById('modulesList'),
+            classesList: document.getElementById('classesList'),
+            functionsList: document.getElementById('functionsList'),
+            diagramContainer: document.getElementById('diagramContainer'),
+            diagramWrapper: document.getElementById('diagramWrapper'),
+            mermaidDiagram: document.getElementById('mermaidDiagram'),
+            emptyState: document.getElementById('emptyState'),
+            detailName: document.getElementById('detailName'),
+            summaryText: document.getElementById('summaryText'),
+            detailContent: document.getElementById('detailContent'),
+            statusDot: document.getElementById('statusDot'),
+            statusText: document.getElementById('statusText'),
+            statsText: document.getElementById('statsText'),
+            toastContainer: document.getElementById('toastContainer'),
+            exportModal: document.getElementById('exportModal'),
+            plantumlCode: document.getElementById('plantumlCode'),
+            mermaidCode: document.getElementById('mermaidCode')
+        };
+
+        // Toast notification
+        function showToast(message, type = 'info') {
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.innerHTML = `
+                <span>${type === 'success' ? '✓' : type === 'error' ? '✗' : 'ℹ'}</span>
+                <span>${message}</span>
+            `;
+            elements.toastContainer.appendChild(toast);
+            setTimeout(() => toast.remove(), 4000);
+        }
+
+        // Update status
+        function setStatus(text, analyzing = false) {
+            elements.statusText.textContent = text;
+            elements.statusDot.classList.toggle('analyzing', analyzing);
+        }
+
+        // File upload handlers
+        const folderInput = document.getElementById('folderInput');
+        const selectFilesBtn = document.getElementById('selectFilesBtn');
+        const selectFolderBtn = document.getElementById('selectFolderBtn');
+        
+        // Button click handlers
+        selectFilesBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            elements.fileInput.click();
+        });
+        
+        selectFolderBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            folderInput.click();
+        });
+        
+        // Drag and drop on zone (for files or folders)
+        elements.uploadZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            elements.uploadZone.classList.add('dragover');
+        });
+
+        elements.uploadZone.addEventListener('dragleave', () => {
+            elements.uploadZone.classList.remove('dragover');
+        });
+
+        elements.uploadZone.addEventListener('drop', async (e) => {
+            e.preventDefault();
+            elements.uploadZone.classList.remove('dragover');
+            
+            // Handle dropped items (files or folders)
+            const items = e.dataTransfer.items;
+            if (items) {
+                const files = [];
+                const promises = [];
+                
+                for (const item of items) {
+                    if (item.kind === 'file') {
+                        const entry = item.webkitGetAsEntry?.();
+                        if (entry) {
+                            promises.push(traverseFileTree(entry, files));
+                        } else {
+                            files.push(item.getAsFile());
+                        }
+                    }
+                }
+                
+                await Promise.all(promises);
+            if (files.length > 0) {
+                await uploadFiles(files);
+                }
+            } else if (e.dataTransfer.files.length > 0) {
+                await uploadFiles(e.dataTransfer.files);
+            }
+        });
+
+        // Supported file extensions
+        const CODE_EXTENSIONS = /\.(py|js|ts|jsx|tsx|java|go|rs|rb|php|cs|kt|swift|c|cpp|h|hpp|vue|scala|clj|ex|exs|hs|ml|r|lua|pl|pm|sh|bash|zsh|ps1|psm1|yaml|yml|json|xml|html|css|scss|sass|less|sql|graphql|proto|toml|ini|cfg|conf)$/i;
+        
+        const SKIP_DIRS = ['node_modules', '__pycache__', '.git', 'venv', '.venv', 'dist', 'build', 'target', 'bin', 'obj', '.idea', '.vscode', 'vendor', 'packages'];
+
+        // Traverse folder structure recursively
+        async function traverseFileTree(entry, files, path = '') {
+            if (entry.isFile) {
+                const file = await new Promise((resolve) => entry.file(resolve));
+                // Filter for code files
+                if (CODE_EXTENSIONS.test(file.name)) {
+                    // Create a new file with the full path
+                    const fullPath = path + file.name;
+                    const newFile = new File([file], fullPath, { type: file.type });
+                    files.push(newFile);
+                }
+            } else if (entry.isDirectory) {
+                // Skip common non-code directories
+                if (SKIP_DIRS.includes(entry.name)) {
+                    return;
+                }
+                const dirReader = entry.createReader();
+                const entries = await new Promise((resolve) => dirReader.readEntries(resolve));
+                for (const childEntry of entries) {
+                    await traverseFileTree(childEntry, files, path + entry.name + '/');
+                }
+            }
+        }
+
+        elements.fileInput.addEventListener('change', async (e) => {
+            if (e.target.files.length > 0) {
+                await uploadFiles(e.target.files);
+            }
+        });
+        
+        folderInput.addEventListener('change', async (e) => {
+            if (e.target.files.length > 0) {
+                // Filter for code files only
+                const codeFiles = Array.from(e.target.files).filter(f => 
+                    CODE_EXTENSIONS.test(f.name) && 
+                    !SKIP_DIRS.some(dir => f.webkitRelativePath.includes('/' + dir + '/'))
+                );
+                if (codeFiles.length > 0) {
+                    await uploadFiles(codeFiles);
+                } else {
+                    showToast('No code files found in folder', 'error');
+                }
+            }
+        });
+
+        // Upload files to server
+        async function uploadFiles(files) {
+            setStatus('Uploading files...', true);
+            
+            const formData = new FormData();
+            for (const file of files) {
+                formData.append('files', file);
+            }
+
+            try {
+                const response = await fetch(`${API_URL}/api/upload`, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!response.ok) throw new Error('Upload failed');
+
+                const data = await response.json();
+                state.projectId = data.project_id;
+                
+                showToast(`Uploaded ${data.file_count} files`, 'success');
+                await analyzeProject();
+            } catch (error) {
+                console.error('Upload error:', error);
+                showToast('Failed to upload files', 'error');
+                setStatus('Upload failed');
+            }
+        }
+
+        // Analyze project
+        async function analyzeProject() {
+            if (!state.projectId) return;
+            
+            setStatus('Analyzing code structure...', true);
+
+            try {
+                const response = await fetch(`${API_URL}/api/analyze`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        project_id: state.projectId,
+                        diagram_type: state.diagramType
+                    })
+                });
+
+                if (!response.ok) throw new Error('Analysis failed');
+
+                const data = await response.json();
+                
+                state.modules = data.modules || [];
+                state.classes = data.classes || [];
+                state.functions = data.functions || [];
+                state.dependencies = data.dependencies || [];
+                state.summaries = data.summaries || {};
+
+                updateSidebar();
+                await loadDiagram();
+                
+                elements.statsText.textContent = `${state.modules.length} modules · ${state.classes.length} classes · ${state.functions.length} functions`;
+                setStatus('Analysis complete');
+                showToast('Code analysis complete!', 'success');
+            } catch (error) {
+                console.error('Analysis error:', error);
+                showToast('Analysis failed', 'error');
+                setStatus('Analysis failed');
+            }
+        }
+
+        // Update sidebar with project structure
+        function updateSidebar() {
+            // Modules
+            elements.modulesList.innerHTML = state.modules.map(m => `
+                <div class="tree-item" data-type="module" data-name="${m.name}">
+                    <div class="tree-icon module">📦</div>
+                    <span class="tree-label">${m.name}</span>
+                    <span class="tree-badge">${m.class_count || 0}c</span>
+                </div>
+            `).join('');
+
+            // Classes
+            elements.classesList.innerHTML = state.classes.map(c => `
+                <div class="tree-item" data-type="class" data-name="${c.name}">
+                    <div class="tree-icon class">🔷</div>
+                    <span class="tree-label">${c.name}</span>
+                    <span class="tree-badge">${(c.methods || []).length}m</span>
+                </div>
+            `).join('');
+
+            // Functions
+            elements.functionsList.innerHTML = state.functions.slice(0, 20).map(f => `
+                <div class="tree-item" data-type="function" data-name="${f.name}">
+                    <div class="tree-icon function">ƒ</div>
+                    <span class="tree-label">${f.name}</span>
+                </div>
+            `).join('');
+
+            // Add click handlers
+            document.querySelectorAll('.tree-item').forEach(item => {
+                item.addEventListener('click', () => selectItem(item.dataset.type, item.dataset.name));
+            });
+        }
+
+        // Select an item and show details
+        function selectItem(type, name) {
+            // Update selection UI
+            document.querySelectorAll('.tree-item').forEach(i => i.classList.remove('selected'));
+            document.querySelector(`.tree-item[data-name="${name}"]`)?.classList.add('selected');
+
+            state.selectedItem = { type, name };
+            
+            let item, summary;
+            
+            if (type === 'module') {
+                item = state.modules.find(m => m.name === name);
+                summary = state.summaries[name] || 'No summary available';
+                updateDetailPanel('module', item, summary);
+            } else if (type === 'class') {
+                item = state.classes.find(c => c.name === name);
+                summary = `Class with ${(item?.methods || []).length} methods`;
+                if (item?.bases?.length) summary += ` extending ${item.bases.join(', ')}`;
+                updateDetailPanel('class', item, summary);
+            } else if (type === 'function') {
+                item = state.functions.find(f => f.name === name);
+                summary = item?.docstring || 'No documentation';
+                updateDetailPanel('function', item, summary);
+            }
+        }
+
+        // Update detail panel
+        function updateDetailPanel(type, item, summary) {
+            if (!item) return;
+
+            elements.detailName.innerHTML = `
+                <span>${item.name}</span>
+                <span class="detail-type-badge ${type}">${type}</span>
+            `;
+
+            elements.summaryText.textContent = summary;
+
+            let extraContent = '';
+
+            if (type === 'class' && item.methods?.length) {
+                extraContent += `
+                    <div class="detail-section">
+                        <div class="detail-section-title">⚙️ Methods</div>
+                        <div class="method-list">
+                            ${item.methods.slice(0, 10).map(m => `
+                                <div class="method-item">
+                                    <span class="method-visibility ${m.name.startsWith('_') ? 'private' : 'public'}">
+                                        ${m.name.startsWith('_') ? '−' : '+'}
+                                    </span>
+                                    <span>${m.name}(${(m.parameters || []).map(p => p.name).join(', ')})</span>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+            }
+
+            if (type === 'module') {
+                const deps = state.dependencies.filter(d => d.source === item.name);
+                if (deps.length) {
+                    extraContent += `
+                        <div class="detail-section">
+                            <div class="detail-section-title">📎 Dependencies</div>
+                            <div class="dependency-list">
+                                ${deps.slice(0, 10).map(d => `
+                                    <span class="dependency-tag">${d.target || d.names?.join(', ')}</span>
+                                `).join('')}
+                            </div>
+                        </div>
+                    `;
+                }
+            }
+
+            elements.detailContent.innerHTML = `
+                <div class="detail-section">
+                    <div class="detail-section-title">📝 AI Summary</div>
+                    <div class="summary-text">${summary}</div>
+                </div>
+                ${extraContent}
+            `;
+        }
+
+        // Load and render diagram
+        async function loadDiagram() {
+            if (!state.projectId) return;
+
+            try {
+                const response = await fetch(`${API_URL}/api/project/${state.projectId}/diagram?diagram_type=${state.diagramType}`);
+                if (!response.ok) throw new Error('Failed to load diagram');
+
+                const data = await response.json();
+                state.currentDiagram = data;
+
+                if (data.mermaid) {
+                    renderMermaidDiagram(data.mermaid);
+                }
+            } catch (error) {
+                console.error('Diagram error:', error);
+                // Generate fallback diagram from local state
+                const fallbackDiagram = generateFallbackDiagram();
+                renderMermaidDiagram(fallbackDiagram);
+            }
+        }
+
+        // Sanitize name for Mermaid
+        function sanitizeMermaidId(name) {
+            if (!name) return 'unnamed';
+            let sanitized = name.replace(/[^a-zA-Z0-9_]/g, '_');
+            if (sanitized[0] && /[0-9]/.test(sanitized[0])) {
+                sanitized = '_' + sanitized;
+            }
+            return sanitized || 'unnamed';
+        }
+
+        // Generate fallback diagram from state
+        function generateFallbackDiagram() {
+            if (state.diagramType === 'class') {
+                const lines = ['classDiagram'];
+                
+                if (state.classes.length === 0) {
+                    // Return a placeholder diagram
+                    lines.push('    class NoClassesFound {');
+                    lines.push('        +Upload a project to see classes');
+                    lines.push('    }');
+                    return lines.join('\n');
+                }
+                
+                state.classes.forEach(cls => {
+                    const clsName = sanitizeMermaidId(cls.name);
+                    const methods = cls.methods || [];
+                    
+                    if (methods.length > 0) {
+                        methods.slice(0, 5).forEach(m => {
+                            const methodName = sanitizeMermaidId(m.name || 'method');
+                            const vis = (m.name || '').startsWith('_') ? '-' : '+';
+                            lines.push(`    ${clsName} : ${vis}${methodName}()`);
+                        });
+                    } else {
+                        lines.push(`    class ${clsName}`);
+                    }
+                    
+                    (cls.bases || []).forEach(base => {
+                        const baseName = sanitizeMermaidId(base);
+                        lines.push(`    ${baseName} <|-- ${clsName}`);
+                    });
+                });
+                
+                return lines.join('\n');
+            } else {
+                const lines = ['graph LR'];
+                const seen = new Set();
+                
+                if (state.dependencies.length === 0 && state.modules.length === 0) {
+                    lines.push('    empty["No dependencies found"]');
+                    return lines.join('\n');
+                }
+                
+                // Add module nodes first
+                state.modules.forEach(m => {
+                    if (m.name) {
+                        const nodeId = sanitizeMermaidId(m.name);
+                        lines.push(`    ${nodeId}["${m.name.replace(/"/g, "'")}"]`);
+                    }
+                });
+                
+                state.dependencies.forEach(dep => {
+                    const source = sanitizeMermaidId(dep.source);
+                    const target = sanitizeMermaidId(dep.target);
+                    const key = `${source}-${target}`;
+                    if (dep.source && dep.target && !seen.has(key)) {
+                        lines.push(`    ${source} --> ${target}`);
+                        seen.add(key);
+                    }
+                });
+                
+                return lines.join('\n');
+            }
+        }
+
+        // Render Tree/Graph visualization
+        function renderTreeGraph() {
+            const container = document.getElementById('graphContainer');
+            const svg = d3.select('#graphSvg');
+            const tooltip = document.getElementById('nodeTooltip');
+            
+            // Clear previous graph
+            svg.selectAll('*').remove();
+            
+            // Show container
+            elements.emptyState.style.display = 'none';
+            container.style.display = 'block';
+            diagramViewport.style.display = 'none';
+            zoomControls.style.display = 'flex';
+            fullscreenBtn.style.display = 'block';
+            
+            // Get dimensions
+            const width = container.clientWidth;
+            const height = container.clientHeight;
+            
+            // Build graph data based on diagram type
+            const graphData = buildGraphData();
+            
+            if (graphData.nodes.length === 0) {
+                svg.append('text')
+                    .attr('x', width / 2)
+                    .attr('y', height / 2)
+                    .attr('text-anchor', 'middle')
+                    .attr('fill', '#6b7280')
+                    .text('No data to display');
+                return;
+            }
+            
+            // Create zoom behavior
+            const zoom = d3.zoom()
+                .scaleExtent([0.1, 4])
+                .on('zoom', (event) => {
+                    g.attr('transform', event.transform);
+                    state.zoom = event.transform.k || 1.0;
+                    if (!isNaN(state.zoom) && zoomLevelDisplay) {
+                        zoomLevelDisplay.textContent = `${Math.round(state.zoom * 100)}%`;
+                    }
+                });
+            
+            svg.call(zoom);
+            
+            // Create main group for zoom/pan
+            const g = svg.append('g');
+            
+            // Create arrow marker
+            svg.append('defs').append('marker')
+                .attr('id', 'arrowhead')
+                .attr('viewBox', '-0 -5 10 10')
+                .attr('refX', 30)
+                .attr('refY', 0)
+                .attr('orient', 'auto')
+                .attr('markerWidth', 6)
+                .attr('markerHeight', 6)
+                .append('path')
+                .attr('d', 'M 0,-5 L 10,0 L 0,5')
+                .attr('fill', '#6366f1');
+            
+            // Create simulation
+            state.simulation = d3.forceSimulation(graphData.nodes)
+                .force('link', d3.forceLink(graphData.links).id(d => d.id).distance(graphConfig.linkDistance))
+                .force('charge', d3.forceManyBody().strength(graphConfig.chargeStrength))
+                .force('center', d3.forceCenter(width / 2, height / 2))
+                .force('collision', d3.forceCollide().radius(graphConfig.nodeRadius + 10));
+            
+            // Create links
+            const link = g.append('g')
+                .selectAll('path')
+                .data(graphData.links)
+                .join('path')
+                .attr('class', d => `graph-link ${d.type}`)
+                .attr('marker-end', 'url(#arrowhead)');
+            
+            // Create node groups
+            const node = g.append('g')
+                .selectAll('g')
+                .data(graphData.nodes)
+                .join('g')
+                .attr('class', d => `graph-node ${d.type}`)
+                .call(d3.drag()
+                    .on('start', dragstarted)
+                    .on('drag', dragged)
+                    .on('end', dragended));
+            
+            // Add circles to nodes
+            node.append('circle')
+                .attr('r', d => d.type === 'module' ? 30 : d.type === 'class' ? 25 : 20);
+            
+            // Add icons to nodes
+            node.append('text')
+                .attr('class', 'node-icon')
+                .attr('dy', '0.35em')
+                .text(d => {
+                    switch(d.type) {
+                        case 'module': return '📦';
+                        case 'class': return '🔷';
+                        case 'function': return 'ƒ';
+                        case 'interface': return '◇';
+                        default: return '●';
+                    }
+                });
+            
+            // Add labels to nodes
+            node.append('text')
+                .attr('dy', 45)
+                .attr('text-anchor', 'middle')
+                .text(d => d.name.length > 15 ? d.name.substring(0, 12) + '...' : d.name);
+            
+            // Tooltip events
+            node.on('mouseover', (event, d) => {
+                tooltip.innerHTML = `
+                    <h4>${getIcon(d.type)} ${d.name}</h4>
+                    <p><strong>Type:</strong> ${d.type}</p>
+                    ${d.methods ? `<p><strong>Methods:</strong> ${d.methods}</p>` : ''}
+                    ${d.module ? `<p><strong>Module:</strong> ${d.module}</p>` : ''}
+                `;
+                tooltip.style.display = 'block';
+                tooltip.style.left = (event.pageX + 10) + 'px';
+                tooltip.style.top = (event.pageY - 10) + 'px';
+            })
+            .on('mousemove', (event) => {
+                tooltip.style.left = (event.pageX + 10) + 'px';
+                tooltip.style.top = (event.pageY - 10) + 'px';
+            })
+            .on('mouseout', () => {
+                tooltip.style.display = 'none';
+            })
+            .on('click', (event, d) => {
+                selectItem(d.type, d.name);
+            });
+            
+            // Update positions on simulation tick
+            state.simulation.on('tick', () => {
+                link.attr('d', d => {
+                    const dx = d.target.x - d.source.x;
+                    const dy = d.target.y - d.source.y;
+                    return `M${d.source.x},${d.source.y} Q${(d.source.x + d.target.x) / 2},${(d.source.y + d.target.y) / 2 - 30} ${d.target.x},${d.target.y}`;
+                });
+                
+                node.attr('transform', d => `translate(${d.x},${d.y})`);
+            });
+            
+            // Drag functions
+            function dragstarted(event, d) {
+                if (!event.active) state.simulation.alphaTarget(0.3).restart();
+                d.fx = d.x;
+                d.fy = d.y;
+            }
+            
+            function dragged(event, d) {
+                d.fx = event.x;
+                d.fy = event.y;
+            }
+            
+            function dragended(event, d) {
+                if (!event.active) state.simulation.alphaTarget(0);
+                d.fx = null;
+                d.fy = null;
+            }
+            
+            // Zoom button handlers for tree view
+            const zoomInBtn = document.getElementById('zoomInBtn');
+            const zoomOutBtn = document.getElementById('zoomOutBtn');
+            const zoomResetBtn = document.getElementById('zoomResetBtn');
+            const zoomFitBtn = document.getElementById('zoomFitBtn');
+            
+            if (zoomInBtn) {
+                zoomInBtn.onclick = () => {
+                    svg.transition().duration(300).call(zoom.scaleBy, 1.3);
+                };
+            }
+            if (zoomOutBtn) {
+                zoomOutBtn.onclick = () => {
+                    svg.transition().duration(300).call(zoom.scaleBy, 0.7);
+                };
+            }
+            if (zoomResetBtn) {
+                zoomResetBtn.onclick = () => {
+                    state.zoom = 1.0;
+                    svg.transition().duration(300).call(zoom.transform, d3.zoomIdentity);
+                    if (zoomLevelDisplay) zoomLevelDisplay.textContent = '100%';
+                };
+            }
+            if (zoomFitBtn) {
+                zoomFitBtn.onclick = () => {
+                    state.zoom = 1.0;
+                    svg.transition().duration(300).call(zoom.transform, d3.zoomIdentity);
+                    if (zoomLevelDisplay) zoomLevelDisplay.textContent = '100%';
+                };
+            }
+        }
+        
+        function getIcon(type) {
+            switch(type) {
+                case 'module': return '📦';
+                case 'class': return '🔷';
+                case 'function': return 'ƒ';
+                case 'interface': return '◇';
+                default: return '●';
+            }
+        }
+        
+        // Build graph data from state
+        function buildGraphData() {
+            const nodes = [];
+            const links = [];
+            const nodeIds = new Set();
+            
+            if (state.diagramType === 'class') {
+                // Add class nodes
+                state.classes.forEach(cls => {
+                    const id = cls.name;
+                    if (!nodeIds.has(id)) {
+                        nodes.push({
+                            id,
+                            name: cls.name,
+                            type: 'class',
+                            methods: cls.methods?.length || 0,
+                            module: cls.module
+                        });
+                        nodeIds.add(id);
+                    }
+                    
+                    // Add inheritance links
+                    (cls.bases || []).forEach(base => {
+                        if (!nodeIds.has(base)) {
+                            nodes.push({ id: base, name: base, type: 'class' });
+                            nodeIds.add(base);
+                        }
+                        links.push({ source: base, target: id, type: 'inheritance' });
+                    });
+                });
+            } else if (state.diagramType === 'dependency') {
+                // Add module nodes
+                state.modules.forEach(m => {
+                    const id = m.name;
+                    if (!nodeIds.has(id)) {
+                        nodes.push({
+                            id,
+                            name: m.name,
+                            type: 'module',
+                            classes: m.class_count || 0
+                        });
+                        nodeIds.add(id);
+                    }
+                });
+                
+                // Add dependency links
+                state.dependencies.forEach(dep => {
+                    if (dep.source && dep.target) {
+                        if (!nodeIds.has(dep.target)) {
+                            nodes.push({ id: dep.target, name: dep.target, type: 'external' });
+                            nodeIds.add(dep.target);
+                        }
+                        if (nodeIds.has(dep.source)) {
+                            links.push({ source: dep.source, target: dep.target, type: 'dependency' });
+                        }
+                    }
+                });
+            } else {
+                // Component view - modules with their classes
+                state.modules.forEach(m => {
+                    const moduleId = m.name;
+                    if (!nodeIds.has(moduleId)) {
+                        nodes.push({
+                            id: moduleId,
+                            name: m.name,
+                            type: 'module'
+                        });
+                        nodeIds.add(moduleId);
+                    }
+                    
+                    // Add classes in this module
+                    state.classes.filter(c => c.module === m.name).forEach(cls => {
+                        const classId = `${m.name}.${cls.name}`;
+                        nodes.push({
+                            id: classId,
+                            name: cls.name,
+                            type: 'class',
+                            module: m.name
+                        });
+                        nodeIds.add(classId);
+                        links.push({ source: moduleId, target: classId, type: 'contains' });
+                    });
+                });
+            }
+            
+            return { nodes, links };
+        }
+
+        // Render Mermaid diagram
+        async function renderMermaidDiagram(code) {
+            elements.emptyState.style.display = 'none';
+            document.getElementById('graphContainer').style.display = 'none';
+            diagramViewport.style.display = 'block';
+            zoomControls.style.display = 'flex';
+            fullscreenBtn.style.display = 'block';
+            
+            // Clean up any previous diagram
+            const existingSvg = document.getElementById('mermaid-svg');
+            if (existingSvg) {
+                existingSvg.remove();
+            }
+            
+            try {
+                // Generate unique ID for each render
+                const uniqueId = 'mermaid-svg-' + Date.now();
+                const { svg } = await mermaid.render(uniqueId, code);
+                elements.mermaidDiagram.innerHTML = svg;
+                
+                // Reset zoom and center
+                state.zoom = 1.0;
+                updateZoom();
+                if (zoomLevelDisplay) zoomLevelDisplay.textContent = '100%';
+                
+                // Center the diagram after a short delay
+                setTimeout(() => {
+                    const viewportWidth = diagramViewport.clientWidth;
+                    const contentWidth = diagramWrapper.scrollWidth;
+                    if (contentWidth > viewportWidth) {
+                        diagramViewport.scrollLeft = (contentWidth - viewportWidth) / 2;
+                    }
+                }, 100);
+                
+            } catch (error) {
+                console.error('Mermaid render error:', error);
+                // Show the raw code as fallback with better formatting
+                elements.mermaidDiagram.innerHTML = `
+                    <div style="padding: 1rem; background: var(--bg-tertiary); border-radius: 8px; border: 1px solid var(--border-subtle);">
+                        <div style="color: var(--accent-orange); margin-bottom: 0.5rem; font-size: 0.9rem;">⚠️ Diagram Preview (raw code)</div>
+                        <pre style="color: var(--text-secondary); font-size: 0.85rem; font-family: var(--font-mono); white-space: pre-wrap; margin: 0;">${code.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</pre>
+                    </div>
+                `;
+            }
+        }
+        
+        // View mode switching
+        document.querySelectorAll('[data-view-mode]').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('[data-view-mode]').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                state.viewMode = btn.dataset.viewMode;
+                renderCurrentView();
+            });
+        });
+        
+        // Render based on current view mode
+        async function renderCurrentView() {
+            if (state.viewMode === 'tree') {
+                renderTreeGraph();
+            } else {
+                await loadDiagram();
+            }
+        }
+
+        // Diagram type buttons
+        document.querySelectorAll('[data-diagram]').forEach(btn => {
+            btn.addEventListener('click', async () => {
+                document.querySelectorAll('[data-diagram]').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                state.diagramType = btn.dataset.diagram;
+                await renderCurrentView();
+            });
+        });
+
+        // Enhanced zoom and pan controls
+        const diagramViewport = document.getElementById('diagramViewport');
+        const diagramWrapper = document.getElementById('diagramWrapper');
+        const zoomControls = document.getElementById('zoomControls');
+        const zoomLevelDisplay = document.getElementById('zoomLevel');
+        const fullscreenBtn = document.getElementById('fullscreenBtn');
+        
+        function updateZoom() {
+            // Ensure zoom is a valid number
+            if (isNaN(state.zoom) || state.zoom === undefined || state.zoom === null) {
+                state.zoom = 1.0;
+            }
+            state.zoom = Math.max(0.1, Math.min(4, state.zoom)); // Clamp between 0.1 and 4
+            
+            if (diagramWrapper) {
+                diagramWrapper.style.transform = `scale(${state.zoom})`;
+            }
+            if (zoomLevelDisplay) {
+                zoomLevelDisplay.textContent = `${Math.round(state.zoom * 100)}%`;
+            }
+        }
+        
+        function zoomIn() {
+            if (isNaN(state.zoom)) state.zoom = 1.0;
+            state.zoom = Math.min(state.zoom * 1.25, 4);
+            updateZoom();
+        }
+        
+        function zoomOut() {
+            if (isNaN(state.zoom)) state.zoom = 1.0;
+            state.zoom = Math.max(state.zoom / 1.25, 0.1);
+            updateZoom();
+        }
+        
+        function zoomReset() {
+            state.zoom = 1.0;
+            updateZoom();
+            if (diagramViewport) {
+                diagramViewport.scrollTo({
+                    left: (diagramViewport.scrollWidth - diagramViewport.clientWidth) / 2,
+                    top: 0,
+                    behavior: 'smooth'
+                });
+            }
+        }
+        
+        function zoomFit() {
+            if (!diagramViewport || !diagramWrapper) {
+                state.zoom = 1.0;
+                updateZoom();
+                return;
+            }
+            
+            const containerWidth = diagramViewport.clientWidth - 80;
+            const containerHeight = diagramViewport.clientHeight - 80;
+            const contentWidth = diagramWrapper.scrollWidth || 1;
+            const contentHeight = diagramWrapper.scrollHeight || 1;
+            
+            const scaleX = containerWidth / contentWidth;
+            const scaleY = containerHeight / contentHeight;
+            state.zoom = Math.min(scaleX, scaleY, 1);
+            
+            // Ensure valid zoom
+            if (isNaN(state.zoom) || state.zoom <= 0) {
+                state.zoom = 1.0;
+            }
+            updateZoom();
+        }
+        
+        // Zoom button events
+        document.getElementById('zoomInBtn').addEventListener('click', zoomIn);
+        document.getElementById('zoomOutBtn').addEventListener('click', zoomOut);
+        document.getElementById('zoomResetBtn').addEventListener('click', zoomReset);
+        document.getElementById('zoomFitBtn').addEventListener('click', zoomFit);
+        
+        // Mouse wheel zoom
+        diagramViewport?.addEventListener('wheel', (e) => {
+            if (e.ctrlKey) {
+                e.preventDefault();
+                if (e.deltaY < 0) {
+                    zoomIn();
+                } else {
+                    zoomOut();
+                }
+            }
+        }, { passive: false });
+        
+        // Fullscreen toggle
+        fullscreenBtn?.addEventListener('click', () => {
+            const container = document.getElementById('diagramContainer');
+            if (document.fullscreenElement) {
+                document.exitFullscreen();
+            } else {
+                container.requestFullscreen();
+            }
+        });
+        
+        // Old toolbar buttons (for backward compatibility)
+        document.getElementById('zoomIn')?.addEventListener('click', zoomIn);
+        document.getElementById('zoomOut')?.addEventListener('click', zoomOut);
+        document.getElementById('fitView')?.addEventListener('click', zoomFit);
+
+        // Export modal
+        document.getElementById('exportBtn').addEventListener('click', () => {
+            if (state.currentDiagram) {
+                elements.plantumlCode.textContent = state.currentDiagram.plantuml || 'Not available';
+                elements.mermaidCode.textContent = state.currentDiagram.mermaid || 'Not available';
+                elements.exportModal.classList.add('active');
+            }
+        });
+
+        document.getElementById('closeModal').addEventListener('click', () => {
+            elements.exportModal.classList.remove('active');
+        });
+
+        elements.exportModal.addEventListener('click', (e) => {
+            if (e.target === elements.exportModal) {
+                elements.exportModal.classList.remove('active');
+            }
+        });
+
+        // Demo data for initial display
+        function loadDemoData() {
+            state.modules = [
+                { name: 'main', file: 'main.py', class_count: 2, function_count: 3 },
+                { name: 'models', file: 'models.py', class_count: 4, function_count: 1 },
+                { name: 'utils', file: 'utils.py', class_count: 1, function_count: 5 }
+            ];
+            
+            state.classes = [
+                { name: 'UserModel', module: 'models', bases: ['BaseModel'], methods: [
+                    { name: '__init__', parameters: [{name: 'self'}] },
+                    { name: 'save', parameters: [{name: 'self'}] },
+                    { name: 'validate', parameters: [{name: 'self'}] }
+                ]},
+                { name: 'BaseModel', module: 'models', bases: [], methods: [
+                    { name: '__init__', parameters: [{name: 'self'}] },
+                    { name: '_connect', parameters: [{name: 'self'}] }
+                ]},
+                { name: 'DataProcessor', module: 'utils', bases: [], methods: [
+                    { name: 'process', parameters: [{name: 'self'}, {name: 'data'}] },
+                    { name: 'transform', parameters: [{name: 'self'}, {name: 'input'}] }
+                ]}
+            ];
+            
+            state.functions = [
+                { name: 'main', module: 'main' },
+                { name: 'setup', module: 'main' },
+                { name: 'format_date', module: 'utils' }
+            ];
+            
+            state.summaries = {
+                'main': 'Entry point module that initializes the application and handles command-line arguments.',
+                'models': 'Data models for database entities including user management and validation logic.',
+                'utils': 'Utility functions for data processing, formatting, and common operations.'
+            };
+            
+            updateSidebar();
+            
+            // Render demo with tree view
+            renderCurrentView();
+            elements.statsText.textContent = '3 modules · 3 classes · 3 functions (Demo)';
+        }
+
+        // View switching
+        const views = {
+            diagram: document.getElementById('diagramView'),
+            code: document.getElementById('codeView'),
+            insights: document.getElementById('insightsView'),
+            metrics: document.getElementById('metricsView')
+        };
+        
+        // Upload tab switching
+        document.querySelectorAll('[data-upload-tab]').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('[data-upload-tab]').forEach(b => {
+                    b.classList.remove('active');
+                    b.style.background = 'transparent';
+                    b.style.color = 'var(--text-muted)';
+                });
+                btn.classList.add('active');
+                btn.style.background = 'var(--accent-purple)';
+                btn.style.color = 'white';
+                
+                const tab = btn.dataset.uploadTab;
+                document.getElementById('localUploadPanel').style.display = tab === 'local' ? 'block' : 'none';
+                document.getElementById('githubUploadPanel').style.display = tab === 'github' ? 'block' : 'none';
+            });
+        });
+        
+        // GitHub import
+        document.getElementById('githubImportBtn')?.addEventListener('click', async () => {
+            const url = document.getElementById('githubUrlInput').value.trim();
+            if (!url) {
+                showToast('Please enter a GitHub URL', 'error');
+                return;
+            }
+            
+            // Parse GitHub URL
+            const match = url.match(/github\.com\/([^\/]+)\/([^\/]+)/);
+            if (!match) {
+                showToast('Invalid GitHub URL format', 'error');
+                return;
+            }
+            
+            const [, owner, repo] = match;
+            setStatus(`Fetching ${owner}/${repo}...`, true);
+            
+            try {
+                const response = await fetch(`${API_URL}/api/github`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ owner, repo: repo.replace('.git', '') })
+                });
+                
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.detail || 'GitHub import failed');
+                }
+                
+                const data = await response.json();
+                state.projectId = data.project_id;
+                state.projectSource = 'github';
+                state.projectName = `${owner}/${repo}`;
+                showToast(`Imported ${owner}/${repo}`, 'success');
+                await analyzeProject();
+            } catch (error) {
+                showToast(error.message, 'error');
+                setStatus('Import failed');
+            }
+        });
+        
+        // Theme toggle
+        document.getElementById('themeToggle')?.addEventListener('click', () => {
+            document.body.classList.toggle('light-theme');
+            const isLight = document.body.classList.contains('light-theme');
+            document.getElementById('themeToggle').textContent = isLight ? '☀️' : '🌙';
+            localStorage.setItem('theme', isLight ? 'light' : 'dark');
+        });
+        
+        // Load saved theme
+        if (localStorage.getItem('theme') === 'light') {
+            document.body.classList.add('light-theme');
+            document.getElementById('themeToggle').textContent = '☀️';
+        }
+        
+        // History button
+        document.getElementById('historyBtn')?.addEventListener('click', () => {
+            loadHistory();
+            document.getElementById('historyModal').classList.add('active');
+        });
+        
+        // Project history
+        let projectHistory = JSON.parse(localStorage.getItem('projectHistory') || '[]');
+        
+        function saveToHistory(project) {
+            // Check if project already exists, remove it first
+            projectHistory = projectHistory.filter(p => p.id !== project.projectId);
+            
+            const entry = {
+                id: project.projectId,
+                name: project.name || 'Unnamed Project',
+                modules: state.modules.length,
+                classes: state.classes.length,
+                functions: state.functions.length,
+                totalMethods: state.classes.reduce((sum, c) => sum + (c.methods?.length || 0), 0),
+                source: project.source || 'local',
+                date: new Date().toISOString()
+            };
+            
+            projectHistory.unshift(entry);
+            if (projectHistory.length > 20) projectHistory.pop();
+            localStorage.setItem('projectHistory', JSON.stringify(projectHistory));
+            
+            // Update history badge
+            updateHistoryBadge();
+        }
+        
+        function updateHistoryBadge() {
+            const historyBtn = document.getElementById('historyBtn');
+            if (historyBtn && projectHistory.length > 0) {
+                historyBtn.innerHTML = `🕐 <span style="font-size: 0.65rem; background: var(--accent-purple); border-radius: 50%; padding: 0.1rem 0.35rem; margin-left: 0.2rem;">${projectHistory.length}</span>`;
+            }
+        }
+        
+        function clearHistory() {
+            projectHistory = [];
+            localStorage.removeItem('projectHistory');
+            loadHistory();
+            updateHistoryBadge();
+            showToast('History cleared', 'success');
+        }
+        
+        function loadHistory() {
+            const list = document.getElementById('historyList');
+            if (projectHistory.length === 0) {
+                list.innerHTML = `
+                    <div style="text-align: center; color: var(--text-muted); padding: 2rem;">
+                        <div style="font-size: 2rem; margin-bottom: 0.5rem;">📭</div>
+                        <div>No projects analyzed yet</div>
+                        <div style="font-size: 0.8rem; margin-top: 0.5rem;">Upload a project to get started</div>
+                    </div>
+                `;
+                return;
+            }
+            
+            list.innerHTML = `
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; padding-bottom: 0.75rem; border-bottom: 1px solid var(--border-subtle);">
+                    <span style="color: var(--text-secondary); font-size: 0.85rem;">${projectHistory.length} project(s)</span>
+                    <button onclick="clearHistory()" style="padding: 0.4rem 0.75rem; background: transparent; border: 1px solid var(--border-subtle); border-radius: 6px; color: var(--text-muted); font-size: 0.75rem; cursor: pointer;">🗑️ Clear All</button>
+                </div>
+                ${projectHistory.map((p, index) => `
+                    <div class="history-item" style="animation: slideIn 0.2s ease-out ${index * 0.05}s both;">
+                        <div class="history-icon">${p.source === 'github' ? '🐙' : '📦'}</div>
+                        <div class="history-info">
+                            <div class="history-name">${escapeHtml(p.name)}</div>
+                            <div class="history-meta">
+                                ${p.modules} modules · ${p.classes} classes · ${p.functions} functions · ${p.totalMethods || 0} methods
+                            </div>
+                            <div class="history-meta" style="margin-top: 0.25rem;">
+                                ${formatDate(p.date)}
+                            </div>
+                        </div>
+                    </div>
+                `).join('')}
+            `;
+        }
+        
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            const now = new Date();
+            const diffMs = now - date;
+            const diffMins = Math.floor(diffMs / 60000);
+            const diffHours = Math.floor(diffMs / 3600000);
+            const diffDays = Math.floor(diffMs / 86400000);
+            
+            if (diffMins < 1) return 'Just now';
+            if (diffMins < 60) return `${diffMins} min ago`;
+            if (diffHours < 24) return `${diffHours} hour${diffHours > 1 ? 's' : ''} ago`;
+            if (diffDays < 7) return `${diffDays} day${diffDays > 1 ? 's' : ''} ago`;
+            return date.toLocaleDateString();
+        }
+        
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+        
+        // Initialize history badge on load
+        updateHistoryBadge();
+        
+        document.querySelectorAll('[data-view]').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const viewName = btn.dataset.view;
+                
+                // Update button states
+                document.querySelectorAll('[data-view]').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                
+                // Show selected view, hide others
+                Object.entries(views).forEach(([name, el]) => {
+                    if (el) el.style.display = name === viewName ? 'flex' : 'none';
+                });
+                
+                // Load content for the view
+                if (viewName === 'code') {
+                    loadCodeView();
+                } else if (viewName === 'insights') {
+                    loadInsightsView();
+                } else if (viewName === 'metrics') {
+                    loadMetricsView();
+                }
+            });
+        });
+        
+        // Load Code View content
+        function loadCodeView() {
+            const container = document.getElementById('codeFilesList');
+            
+            if (state.modules.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-icon">📝</div>
+                        <h2 class="empty-title">No Code Loaded</h2>
+                        <p class="empty-desc">Upload a project to browse its source code structure.</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            let html = '';
+            
+            // Show modules with their classes and functions
+            state.modules.forEach(module => {
+                const moduleClasses = state.classes.filter(c => c.module === module.name);
+                const moduleFunctions = state.functions.filter(f => f.module === module.name);
+                
+                html += `
+                    <div class="code-module-card" style="background: var(--bg-secondary); border-radius: 12px; border: 1px solid var(--border-subtle); overflow: hidden;">
+                        <div class="code-module-header" style="padding: 1rem; background: var(--bg-tertiary); border-bottom: 1px solid var(--border-subtle); display: flex; align-items: center; gap: 0.75rem;">
+                            <span style="font-size: 1.25rem;">📦</span>
+                            <div>
+                                <div style="font-weight: 600; color: var(--text-primary);">${module.name}</div>
+                                <div style="font-size: 0.8rem; color: var(--text-muted);">${module.file || 'module'}</div>
+                            </div>
+                        </div>
+                        <div style="padding: 1rem;">
+                            ${module.docstring ? `<p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 1rem; padding: 0.75rem; background: var(--bg-tertiary); border-radius: 8px; border-left: 3px solid var(--accent-purple);">${module.docstring}</p>` : ''}
+                            
+                            ${moduleClasses.length > 0 ? `
+                                <div style="margin-bottom: 1rem;">
+                                    <div style="font-size: 0.75rem; text-transform: uppercase; color: var(--text-muted); margin-bottom: 0.5rem; letter-spacing: 0.5px;">Classes</div>
+                                    ${moduleClasses.map(cls => `
+                                        <div style="background: var(--bg-tertiary); padding: 0.75rem; border-radius: 8px; margin-bottom: 0.5rem;">
+                                            <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem;">
+                                                <span style="color: var(--accent-green);">🔷</span>
+                                                <span style="font-family: var(--font-mono); font-weight: 500;">${cls.name}</span>
+                                                ${cls.bases?.length ? `<span style="font-size: 0.75rem; color: var(--text-muted);">extends ${cls.bases.join(', ')}</span>` : ''}
+                                            </div>
+                                            ${cls.methods?.length ? `
+                                                <div style="display: flex; flex-wrap: wrap; gap: 0.25rem;">
+                                                    ${cls.methods.slice(0, 8).map(m => `
+                                                        <span style="font-family: var(--font-mono); font-size: 0.75rem; padding: 0.2rem 0.5rem; background: var(--bg-primary); border-radius: 4px; color: ${m.name.startsWith('_') ? 'var(--accent-orange)' : 'var(--accent-cyan)'};">${m.name}()</span>
+                                                    `).join('')}
+                                                    ${cls.methods.length > 8 ? `<span style="font-size: 0.75rem; color: var(--text-muted);">+${cls.methods.length - 8} more</span>` : ''}
+                                                </div>
+                                            ` : ''}
+                                        </div>
+                                    `).join('')}
+                                </div>
+                            ` : ''}
+                            
+                            ${moduleFunctions.length > 0 ? `
+                                <div>
+                                    <div style="font-size: 0.75rem; text-transform: uppercase; color: var(--text-muted); margin-bottom: 0.5rem; letter-spacing: 0.5px;">Functions</div>
+                                    <div style="display: flex; flex-wrap: wrap; gap: 0.5rem;">
+                                        ${moduleFunctions.slice(0, 12).map(f => `
+                                            <span style="font-family: var(--font-mono); font-size: 0.85rem; padding: 0.4rem 0.75rem; background: var(--bg-tertiary); border-radius: 6px; color: var(--accent-orange); border: 1px solid var(--border-subtle);">ƒ ${f.name}</span>
+                                        `).join('')}
+                                        ${moduleFunctions.length > 12 ? `<span style="font-size: 0.85rem; color: var(--text-muted); padding: 0.4rem;">+${moduleFunctions.length - 12} more</span>` : ''}
+                                    </div>
+                                </div>
+                            ` : ''}
+                        </div>
+                    </div>
+                `;
+            });
+            
+            container.innerHTML = html;
+        }
+        
+        // Load Metrics View content
+        function loadMetricsView() {
+            const container = document.getElementById('metricsContent');
+            
+            if (state.modules.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-icon">📈</div>
+                        <h2 class="empty-title">No Metrics Yet</h2>
+                        <p class="empty-desc">Upload a project to see code quality metrics.</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            // Calculate metrics
+            const totalLines = state.modules.reduce((sum, m) => sum + (m.line_count || 0), 0);
+            const totalMethods = state.classes.reduce((sum, c) => sum + (c.methods?.length || 0), 0);
+            const avgMethodsPerClass = state.classes.length > 0 ? (totalMethods / state.classes.length).toFixed(1) : 0;
+            const avgLinesPerModule = state.modules.length > 0 ? Math.round(totalLines / state.modules.length) : 0;
+            
+            // Complexity estimation (simple heuristic)
+            const complexClasses = state.classes.filter(c => (c.methods?.length || 0) > 10).length;
+            const inheritanceDepth = state.classes.filter(c => c.bases?.length > 0).length;
+            
+            // Quality score (simple calculation)
+            let qualityScore = 100;
+            qualityScore -= complexClasses * 5; // Penalty for complex classes
+            qualityScore -= Math.max(0, avgMethodsPerClass - 8) * 3; // Penalty for too many methods
+            qualityScore = Math.max(0, Math.min(100, qualityScore));
+            
+            const qualityColor = qualityScore >= 80 ? 'var(--accent-green)' : qualityScore >= 60 ? 'var(--accent-orange)' : 'var(--accent-pink)';
+            
+            container.innerHTML = `
+                <div style="text-align: center; margin-bottom: 2rem;">
+                    <div class="quality-ring">
+                        <svg width="120" height="120">
+                            <circle class="bg" cx="60" cy="60" r="52"></circle>
+                            <circle class="progress" cx="60" cy="60" r="52" 
+                                stroke="${qualityColor}"
+                                stroke-dasharray="${2 * Math.PI * 52}"
+                                stroke-dashoffset="${2 * Math.PI * 52 * (1 - qualityScore / 100)}">
+                            </circle>
+                        </svg>
+                        <div class="quality-score">${Math.round(qualityScore)}</div>
+                    </div>
+                    <div style="color: var(--text-secondary);">Code Quality Score</div>
+                </div>
+                
+                <div class="metrics-grid">
+                    <div class="metric-card">
+                        <div class="metric-value">${totalLines.toLocaleString()}</div>
+                        <div class="metric-label">Total Lines of Code</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-value">${state.modules.length}</div>
+                        <div class="metric-label">Modules</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-value">${state.classes.length}</div>
+                        <div class="metric-label">Classes</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-value">${state.functions.length}</div>
+                        <div class="metric-label">Functions</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-value">${totalMethods}</div>
+                        <div class="metric-label">Total Methods</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-value">${avgMethodsPerClass}</div>
+                        <div class="metric-label">Avg Methods/Class</div>
+                    </div>
+                </div>
+                
+                <div style="background: var(--bg-secondary); border-radius: 12px; padding: 1.5rem; margin-bottom: 1.5rem; border: 1px solid var(--border-subtle);">
+                    <h3 style="margin: 0 0 1rem; font-size: 1rem;">📊 Code Distribution</h3>
+                    
+                    <div style="margin-bottom: 1rem;">
+                        <div style="display: flex; justify-content: space-between; font-size: 0.85rem; margin-bottom: 0.25rem;">
+                            <span>Classes</span>
+                            <span>${state.classes.length}</span>
+                        </div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: ${Math.min(100, state.classes.length * 5)}%; background: var(--accent-green);"></div>
+                        </div>
+                    </div>
+                    
+                    <div style="margin-bottom: 1rem;">
+                        <div style="display: flex; justify-content: space-between; font-size: 0.85rem; margin-bottom: 0.25rem;">
+                            <span>Functions</span>
+                            <span>${state.functions.length}</span>
+                        </div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: ${Math.min(100, state.functions.length * 3)}%; background: var(--accent-orange);"></div>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <div style="display: flex; justify-content: space-between; font-size: 0.85rem; margin-bottom: 0.25rem;">
+                            <span>Dependencies</span>
+                            <span>${state.dependencies.length}</span>
+                        </div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: ${Math.min(100, state.dependencies.length * 2)}%; background: var(--accent-cyan);"></div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div style="background: var(--bg-secondary); border-radius: 12px; padding: 1.5rem; border: 1px solid var(--border-subtle);">
+                    <h3 style="margin: 0 0 1rem; font-size: 1rem;">⚠️ Complexity Alerts</h3>
+                    <div style="color: var(--text-secondary); font-size: 0.9rem;">
+                        ${complexClasses > 0 ? `<div style="margin-bottom: 0.5rem;">• <strong style="color: var(--accent-orange);">${complexClasses} classes</strong> have more than 10 methods (consider refactoring)</div>` : ''}
+                        ${avgMethodsPerClass > 10 ? `<div style="margin-bottom: 0.5rem;">• Average of <strong style="color: var(--accent-orange);">${avgMethodsPerClass} methods</strong> per class is high</div>` : ''}
+                        ${inheritanceDepth > 0 ? `<div style="margin-bottom: 0.5rem;">• <strong style="color: var(--text-primary);">${inheritanceDepth} classes</strong> use inheritance</div>` : ''}
+                        ${complexClasses === 0 && avgMethodsPerClass <= 10 ? '<div style="color: var(--accent-green);">✓ No major complexity issues detected!</div>' : ''}
+                    </div>
+                </div>
+            `;
+        }
+        
+        // Load Insights View content
+        function loadInsightsView() {
+            const container = document.getElementById('insightsContent');
+            
+            if (state.modules.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-icon">💡</div>
+                        <h2 class="empty-title">No Insights Yet</h2>
+                        <p class="empty-desc">Upload a project to see AI-generated architectural insights.</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            // Generate insights
+            const totalClasses = state.classes.length;
+            const totalFunctions = state.functions.length;
+            const totalModules = state.modules.length;
+            const avgMethodsPerClass = totalClasses > 0 
+                ? Math.round(state.classes.reduce((sum, c) => sum + (c.methods?.length || 0), 0) / totalClasses) 
+                : 0;
+            
+            // Find inheritance relationships
+            const inheritanceCount = state.classes.filter(c => c.bases?.length > 0).length;
+            
+            // Find most connected modules
+            const depCounts = {};
+            state.dependencies.forEach(d => {
+                if (d.target) {
+                    depCounts[d.target] = (depCounts[d.target] || 0) + 1;
+                }
+            });
+            const topDeps = Object.entries(depCounts)
+                .sort((a, b) => b[1] - a[1])
+                .slice(0, 5);
+            
+            let html = `
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 2rem;">
+                    <div style="background: var(--bg-secondary); padding: 1.25rem; border-radius: 12px; border: 1px solid var(--border-subtle);">
+                        <div style="font-size: 2rem; font-weight: 700; color: var(--accent-purple);">${totalModules}</div>
+                        <div style="color: var(--text-secondary); font-size: 0.9rem;">Modules</div>
+                    </div>
+                    <div style="background: var(--bg-secondary); padding: 1.25rem; border-radius: 12px; border: 1px solid var(--border-subtle);">
+                        <div style="font-size: 2rem; font-weight: 700; color: var(--accent-green);">${totalClasses}</div>
+                        <div style="color: var(--text-secondary); font-size: 0.9rem;">Classes</div>
+                    </div>
+                    <div style="background: var(--bg-secondary); padding: 1.25rem; border-radius: 12px; border: 1px solid var(--border-subtle);">
+                        <div style="font-size: 2rem; font-weight: 700; color: var(--accent-orange);">${totalFunctions}</div>
+                        <div style="color: var(--text-secondary); font-size: 0.9rem;">Functions</div>
+                    </div>
+                    <div style="background: var(--bg-secondary); padding: 1.25rem; border-radius: 12px; border: 1px solid var(--border-subtle);">
+                        <div style="font-size: 2rem; font-weight: 700; color: var(--accent-cyan);">${avgMethodsPerClass}</div>
+                        <div style="color: var(--text-secondary); font-size: 0.9rem;">Avg Methods/Class</div>
+                    </div>
+                </div>
+                
+                <div style="background: var(--bg-secondary); padding: 1.5rem; border-radius: 12px; border: 1px solid var(--border-subtle); margin-bottom: 1.5rem;">
+                    <h3 style="font-size: 1rem; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
+                        <span>🏗️</span> Architecture Overview
+                    </h3>
+                    <div style="color: var(--text-secondary); line-height: 1.7;">
+                        ${totalClasses > 0 ? `
+                            <p style="margin-bottom: 0.75rem;">Your codebase contains <strong style="color: var(--text-primary);">${totalClasses} classes</strong> across <strong style="color: var(--text-primary);">${totalModules} modules</strong>.</p>
+                            ${inheritanceCount > 0 ? `<p style="margin-bottom: 0.75rem;"><strong style="color: var(--text-primary);">${inheritanceCount} classes</strong> use inheritance, suggesting an object-oriented design pattern.</p>` : ''}
+                            ${avgMethodsPerClass > 10 ? `<p style="margin-bottom: 0.75rem;">⚠️ Average of ${avgMethodsPerClass} methods per class is relatively high. Consider splitting large classes.</p>` : ''}
+                        ` : `
+                            <p>Your codebase is primarily function-based with <strong style="color: var(--text-primary);">${totalFunctions} functions</strong> across <strong style="color: var(--text-primary);">${totalModules} modules</strong>.</p>
+                        `}
+                    </div>
+                </div>
+                
+                ${topDeps.length > 0 ? `
+                    <div style="background: var(--bg-secondary); padding: 1.5rem; border-radius: 12px; border: 1px solid var(--border-subtle); margin-bottom: 1.5rem;">
+                        <h3 style="font-size: 1rem; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
+                            <span>🔗</span> Most Used Dependencies
+                        </h3>
+                        <div style="display: flex; flex-wrap: wrap; gap: 0.5rem;">
+                            ${topDeps.map(([name, count]) => `
+                                <span style="padding: 0.5rem 1rem; background: var(--bg-tertiary); border-radius: 8px; border: 1px solid var(--border-subtle);">
+                                    <span style="color: var(--text-primary);">${name}</span>
+                                    <span style="color: var(--text-muted); font-size: 0.8rem; margin-left: 0.5rem;">${count}x</span>
+                                </span>
+                            `).join('')}
+                        </div>
+                    </div>
+                ` : ''}
+                
+                ${Object.keys(state.summaries).length > 0 ? `
+                    <div style="background: var(--bg-secondary); padding: 1.5rem; border-radius: 12px; border: 1px solid var(--border-subtle);">
+                        <h3 style="font-size: 1rem; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
+                            <span>🤖</span> AI Module Summaries
+                        </h3>
+                        <div style="display: flex; flex-direction: column; gap: 1rem;">
+                            ${Object.entries(state.summaries).map(([name, summary]) => `
+                                <div style="padding: 1rem; background: var(--bg-tertiary); border-radius: 8px; border-left: 3px solid var(--accent-purple);">
+                                    <div style="font-weight: 600; color: var(--text-primary); margin-bottom: 0.5rem;">${name}</div>
+                                    <div style="color: var(--text-secondary); font-size: 0.9rem; line-height: 1.6;">${summary}</div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                ` : ''}
+            `;
+            
+            container.innerHTML = html;
+        }
+
+        // Detail panel tab switching
+        document.querySelectorAll('.detail-tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                const tabName = tab.dataset.detailTab;
+                
+                // Update tab styles
+                document.querySelectorAll('.detail-tab').forEach(t => {
+                    t.classList.remove('active');
+                    t.style.color = 'var(--text-muted)';
+                    t.style.borderBottomColor = 'transparent';
+                });
+                tab.classList.add('active');
+                tab.style.color = 'var(--text-primary)';
+                tab.style.borderBottomColor = 'var(--accent-purple)';
+                
+                // Show/hide content
+                document.getElementById('infoTab').style.display = tabName === 'info' ? 'block' : 'none';
+                document.getElementById('chatTab').style.display = tabName === 'chat' ? 'flex' : 'none';
+            });
+        });
+        
+        // Chat functionality
+        const chatState = {
+            history: [],
+            isTyping: false
+        };
+        
+        const chatInput = document.getElementById('chatInput');
+        const chatSendBtn = document.getElementById('chatSendBtn');
+        const chatMessages = document.getElementById('chatMessages');
+        const chatHint = document.getElementById('chatHint');
+        
+        // Enable chat when project is loaded
+        function enableChat() {
+            chatInput.disabled = false;
+            chatSendBtn.disabled = false;
+            chatHint.textContent = 'Press Enter to send';
+        }
+        
+        // Add message to chat
+        function addChatMessage(content, role) {
+            const msgDiv = document.createElement('div');
+            msgDiv.className = `chat-message ${role}`;
+            
+            // Parse markdown-like formatting for assistant messages
+            if (role === 'assistant') {
+                content = content
+                    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                    .replace(/`(.*?)`/g, '<code>$1</code>')
+                    .replace(/\n/g, '<br>');
+            }
+            
+            msgDiv.innerHTML = content;
+            chatMessages.appendChild(msgDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+        
+        // Show typing indicator
+        function showTyping() {
+            const typingDiv = document.createElement('div');
+            typingDiv.className = 'chat-typing';
+            typingDiv.id = 'typingIndicator';
+            typingDiv.innerHTML = `
+                <span>AI is thinking</span>
+                <div class="dots">
+                    <div class="dot"></div>
+                    <div class="dot"></div>
+                    <div class="dot"></div>
+                </div>
+            `;
+            chatMessages.appendChild(typingDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+        
+        // Remove typing indicator
+        function hideTyping() {
+            const typing = document.getElementById('typingIndicator');
+            if (typing) typing.remove();
+        }
+        
+        // Send chat message
+        async function sendChatMessage() {
+            const message = chatInput.value.trim();
+            if (!message || !state.projectId || chatState.isTyping) return;
+            
+            // Add user message
+            addChatMessage(message, 'user');
+            chatState.history.push({ role: 'user', content: message });
+            chatInput.value = '';
+            
+            // Show typing
+            chatState.isTyping = true;
+            chatSendBtn.disabled = true;
+            showTyping();
+            
+            try {
+                const response = await fetch(`${API_URL}/api/chat`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        project_id: state.projectId,
+                        message: message,
+                        chat_history: chatState.history.slice(-10)
+                    })
+                });
+                
+                hideTyping();
+                
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.detail || 'Chat failed');
+                }
+                
+                const data = await response.json();
+                addChatMessage(data.response, 'assistant');
+                chatState.history.push({ role: 'assistant', content: data.response });
+                
+                // Show model indicator
+                if (data.model && data.model !== 'basic') {
+                    const modelIndicator = document.getElementById('modelIndicator');
+                    const modelName = document.getElementById('modelName');
+                    modelIndicator.style.display = 'block';
+                    modelName.textContent = data.model.includes('gemini') ? 'Gemini' : 
+                                           data.model.includes('gpt') ? 'GPT' : 
+                                           data.model.includes('claude') ? 'Claude' : 'AI';
+                }
+                
+            } catch (error) {
+                hideTyping();
+                console.error('Chat error:', error);
+                addChatMessage(`Sorry, I encountered an error: ${error.message}. Please try again.`, 'assistant');
+            } finally {
+                chatState.isTyping = false;
+                chatSendBtn.disabled = false;
+            }
+        }
+        
+        // Event listeners for chat
+        chatSendBtn.addEventListener('click', sendChatMessage);
+        chatInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendChatMessage();
+            }
+        });
+        
+        // Update the analyzeProject function to enable chat and save history
+        const originalAnalyzeProject = analyzeProject;
+        analyzeProject = async function() {
+            await originalAnalyzeProject();
+            if (state.projectId) {
+                enableChat();
+                // Add welcome message for this project
+                addChatMessage(`I've analyzed your project! It has **${state.modules.length} modules**, **${state.classes.length} classes**, and **${state.functions.length} functions**. What would you like to know?`, 'assistant');
+                
+                // Save to history
+                const projectName = state.projectName || state.modules[0]?.name || 'Project ' + state.projectId.slice(-8);
+                saveToHistory({
+                    projectId: state.projectId,
+                    name: projectName,
+                    source: state.projectSource || 'local'
+                });
+                
+                // Reset for next project
+                state.projectName = null;
+                state.projectSource = null;
+            }
+        };
+
+        // Initialize
+        loadDemoData();
+    </script>
+</body>
+</html>

@@ -1,0 +1,636 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CodeVision AI - System Architecture</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #0f0f23 0%, #1a1a2e 50%, #16213e 100%);
+            color: #e0e0e0;
+            min-height: 100vh;
+            padding: 40px;
+        }
+        
+        h1 {
+            text-align: center;
+            font-size: 3rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+            background: linear-gradient(90deg, #00d4ff, #7c3aed, #f472b6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .subtitle {
+            text-align: center;
+            color: #888;
+            margin-bottom: 50px;
+            font-size: 1.2rem;
+        }
+        
+        .diagram-container {
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 20px;
+            padding: 40px;
+            margin-bottom: 40px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+        }
+        
+        .diagram-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 30px;
+            color: #00d4ff;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .diagram-title .number {
+            background: linear-gradient(135deg, #7c3aed, #00d4ff);
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            color: white;
+        }
+        
+        .mermaid {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            overflow-x: auto;
+        }
+        
+        .ascii-diagram {
+            background: #1e1e2e;
+            border-radius: 12px;
+            padding: 30px;
+            overflow-x: auto;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.85rem;
+            line-height: 1.4;
+            color: #cdd6f4;
+            white-space: pre;
+        }
+        
+        .description {
+            margin-top: 20px;
+            padding: 20px;
+            background: rgba(0, 212, 255, 0.1);
+            border-radius: 10px;
+            border-left: 4px solid #00d4ff;
+            color: #ccc;
+            line-height: 1.6;
+        }
+        
+        .tech-stack {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-top: 30px;
+        }
+        
+        .tech-card {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.3s ease;
+        }
+        
+        .tech-card:hover {
+            transform: translateY(-5px);
+            border-color: #7c3aed;
+            box-shadow: 0 10px 40px rgba(124, 58, 237, 0.2);
+        }
+        
+        .tech-card .icon {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+        
+        .tech-card .name {
+            font-weight: 600;
+            color: white;
+            margin-bottom: 5px;
+        }
+        
+        .tech-card .role {
+            font-size: 0.85rem;
+            color: #888;
+        }
+        
+        .flow-section {
+            margin-top: 40px;
+        }
+        
+        .flow-steps {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 20px;
+            margin-top: 20px;
+        }
+        
+        .flow-step {
+            flex: 1;
+            min-width: 150px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            padding: 25px 20px;
+            text-align: center;
+            position: relative;
+        }
+        
+        .flow-step::after {
+            content: '→';
+            position: absolute;
+            right: -25px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 1.5rem;
+            color: #7c3aed;
+        }
+        
+        .flow-step:last-child::after {
+            display: none;
+        }
+        
+        .flow-step .step-icon {
+            font-size: 2rem;
+            margin-bottom: 10px;
+        }
+        
+        .flow-step .step-title {
+            font-weight: 600;
+            color: #00d4ff;
+            margin-bottom: 5px;
+        }
+        
+        .flow-step .step-desc {
+            font-size: 0.8rem;
+            color: #888;
+        }
+        
+        .nav-buttons {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            display: flex;
+            gap: 10px;
+        }
+        
+        .nav-btn {
+            background: linear-gradient(135deg, #7c3aed, #00d4ff);
+            color: white;
+            border: none;
+            padding: 15px 20px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        
+        .nav-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 10px 30px rgba(124, 58, 237, 0.4);
+        }
+
+        @media print {
+            body {
+                background: white;
+                color: black;
+            }
+            .diagram-container {
+                page-break-inside: avoid;
+                border: 2px solid #333;
+            }
+            .nav-buttons {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <h1>🔮 CodeVision AI</h1>
+    <p class="subtitle">System Architecture Documentation</p>
+
+    <!-- High-Level Architecture -->
+    <div class="diagram-container">
+        <h2 class="diagram-title">
+            <span class="number">1</span>
+            High-Level System Architecture
+        </h2>
+        <div class="mermaid">
+flowchart TB
+    subgraph USER["👤 USER"]
+        Browser["🌐 Web Browser"]
+    end
+
+    subgraph FRONTEND["📱 FRONTEND LAYER"]
+        direction TB
+        SPA["Single Page Application"]
+        D3["D3.js Tree View"]
+        Mermaid["Mermaid.js UML"]
+        ChatUI["Chat Interface"]
+    end
+
+    subgraph BACKEND["⚙️ BACKEND LAYER"]
+        direction TB
+        API["FastAPI Server"]
+        Cache["In-Memory Cache"]
+        Router["Request Router"]
+    end
+
+    subgraph CORE["🔧 CORE SERVICES"]
+        direction TB
+        subgraph PARSERS["Code Parsers"]
+            PythonP["Python AST"]
+            JSP["JS/TS Regex"]
+            GenP["Generic 15+"]
+        end
+        
+        subgraph LLM["LLM Integration"]
+            LC["LangChain"]
+            PT["Prompts"]
+        end
+        
+        subgraph DIAG["Diagram Generator"]
+            MG["Mermaid"]
+            PU["PlantUML"]
+            DOT["Graphviz"]
+        end
+    end
+
+    subgraph EXT["☁️ EXTERNAL"]
+        Gemini["Google Gemini API"]
+        GitHub["GitHub API"]
+    end
+
+    Browser --> SPA
+    SPA --> D3
+    SPA --> Mermaid
+    SPA --> ChatUI
+    
+    SPA <--> API
+    API --> Router
+    Router --> Cache
+    Router --> PARSERS
+    Router --> LLM
+    Router --> DIAG
+    
+    LC --> PT
+    LC <--> Gemini
+    API <--> GitHub
+
+    style USER fill:#e1f5fe,stroke:#0277bd,stroke-width:2px
+    style FRONTEND fill:#fff3e0,stroke:#ef6c00,stroke-width:2px
+    style BACKEND fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px
+    style CORE fill:#fce4ec,stroke:#c2185b,stroke-width:2px
+    style EXT fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px
+        </div>
+        <div class="description">
+            <strong>Three-Tier Architecture:</strong> CodeVision AI follows a clean three-tier architecture pattern.
+            The Frontend handles user interactions and visualization, the Backend manages API requests and orchestration,
+            and Core Services provide specialized functionality for parsing, AI analysis, and diagram generation.
+        </div>
+    </div>
+
+    <!-- Data Flow -->
+    <div class="diagram-container">
+        <h2 class="diagram-title">
+            <span class="number">2</span>
+            Data Flow Pipeline
+        </h2>
+        <div class="flow-steps">
+            <div class="flow-step">
+                <div class="step-icon">📥</div>
+                <div class="step-title">INPUT</div>
+                <div class="step-desc">File Upload or GitHub URL</div>
+            </div>
+            <div class="flow-step">
+                <div class="step-icon">📝</div>
+                <div class="step-title">PARSE</div>
+                <div class="step-desc">Extract code structure</div>
+            </div>
+            <div class="flow-step">
+                <div class="step-icon">🧠</div>
+                <div class="step-title">ANALYZE</div>
+                <div class="step-desc">LLM generates insights</div>
+            </div>
+            <div class="flow-step">
+                <div class="step-icon">📊</div>
+                <div class="step-title">VISUALIZE</div>
+                <div class="step-desc">Generate diagrams</div>
+            </div>
+            <div class="flow-step">
+                <div class="step-icon">💬</div>
+                <div class="step-title">INTERACT</div>
+                <div class="step-desc">Chat & explore</div>
+            </div>
+        </div>
+        <div class="description">
+            <strong>Pipeline:</strong> Code flows through the system in a clear pipeline. Input is received,
+            parsed into structured data, analyzed by the LLM for insights, converted into visual diagrams,
+            and presented to the user with an interactive chat interface.
+        </div>
+    </div>
+
+    <!-- Sequence Diagram -->
+    <div class="diagram-container">
+        <h2 class="diagram-title">
+            <span class="number">3</span>
+            Request Sequence Flow
+        </h2>
+        <div class="mermaid">
+sequenceDiagram
+    participant U as 👤 User
+    participant F as 📱 Frontend
+    participant B as ⚙️ Backend
+    participant P as 📝 Parsers
+    participant L as 🧠 Gemini LLM
+    participant D as 📊 Diagram Gen
+
+    U->>F: Upload Files
+    F->>B: POST /api/upload
+    B-->>F: project_id
+    
+    F->>B: POST /api/analyze
+    B->>P: Parse all files
+    P-->>B: Classes, Functions, Deps
+    B->>L: Generate summaries
+    L-->>B: AI Summaries
+    B->>D: Create diagrams
+    D-->>B: Mermaid code
+    B-->>F: Complete analysis
+    
+    F->>F: Render visualizations
+    
+    U->>F: Ask question
+    F->>B: POST /api/chat
+    B->>L: Query with context
+    L-->>B: Detailed answer
+    B-->>F: Response
+    F->>U: Display answer
+        </div>
+        <div class="description">
+            <strong>Request Flow:</strong> This sequence diagram shows the typical flow when a user uploads
+            and analyzes a project. Notice how the Backend orchestrates multiple services (Parsers, LLM, 
+            Diagram Generator) to produce a comprehensive analysis result.
+        </div>
+    </div>
+
+    <!-- Technology Stack -->
+    <div class="diagram-container">
+        <h2 class="diagram-title">
+            <span class="number">4</span>
+            Technology Stack
+        </h2>
+        <div class="tech-stack">
+            <div class="tech-card">
+                <div class="icon">⚡</div>
+                <div class="name">FastAPI</div>
+                <div class="role">Backend Framework</div>
+            </div>
+            <div class="tech-card">
+                <div class="icon">🐍</div>
+                <div class="name">Python 3.10+</div>
+                <div class="role">Core Language</div>
+            </div>
+            <div class="tech-card">
+                <div class="icon">🔗</div>
+                <div class="name">LangChain</div>
+                <div class="role">LLM Orchestration</div>
+            </div>
+            <div class="tech-card">
+                <div class="icon">✨</div>
+                <div class="name">Google Gemini</div>
+                <div class="role">AI Model</div>
+            </div>
+            <div class="tech-card">
+                <div class="icon">🌳</div>
+                <div class="name">D3.js</div>
+                <div class="role">Tree Visualization</div>
+            </div>
+            <div class="tech-card">
+                <div class="icon">📊</div>
+                <div class="name">Mermaid.js</div>
+                <div class="role">UML Diagrams</div>
+            </div>
+            <div class="tech-card">
+                <div class="icon">🌐</div>
+                <div class="name">HTML/CSS/JS</div>
+                <div class="role">Frontend SPA</div>
+            </div>
+            <div class="tech-card">
+                <div class="icon">🔍</div>
+                <div class="name">Python AST</div>
+                <div class="role">Code Parsing</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Component Breakdown -->
+    <div class="diagram-container">
+        <h2 class="diagram-title">
+            <span class="number">5</span>
+            Component Breakdown
+        </h2>
+        <div class="mermaid">
+graph TB
+    subgraph FE["Frontend Components"]
+        direction LR
+        Upload["📁 Upload Panel"]
+        Tree["🌳 Tree View"]
+        UML["📊 UML View"]
+        Chat["💬 Chat Panel"]
+        Metrics["📈 Metrics"]
+    end
+
+    subgraph BE["Backend Modules"]
+        direction LR
+        MainPy["main.py<br/>API Routes"]
+        AnalyzerPy["analyzer.py<br/>LLM Logic"]
+        ParsersPy["parsers/<br/>Code Analysis"]
+        DiagramPy["diagram_generator.py<br/>Visualization"]
+    end
+
+    subgraph AI["AI Features"]
+        direction LR
+        Summary["Module<br/>Summaries"]
+        Relationships["Relationship<br/>Analysis"]
+        ChatAI["Interactive<br/>Chat"]
+        Explain["Deep<br/>Explanations"]
+    end
+
+    Upload --> MainPy
+    MainPy --> ParsersPy
+    ParsersPy --> AnalyzerPy
+    AnalyzerPy --> DiagramPy
+    
+    AnalyzerPy --> Summary
+    AnalyzerPy --> Relationships
+    AnalyzerPy --> ChatAI
+    AnalyzerPy --> Explain
+    
+    DiagramPy --> Tree
+    DiagramPy --> UML
+    Summary --> Chat
+    Metrics --> MainPy
+
+    style FE fill:#e3f2fd,stroke:#1565c0
+    style BE fill:#e8f5e9,stroke:#2e7d32
+    style AI fill:#fff3e0,stroke:#ef6c00
+        </div>
+        <div class="description">
+            <strong>Components:</strong> The system is divided into Frontend components (user interface elements),
+            Backend modules (Python files handling logic), and AI features (specific LLM-powered capabilities).
+            Each component has a clear responsibility following the Single Responsibility Principle.
+        </div>
+    </div>
+
+    <!-- ASCII Diagram for Reference -->
+    <div class="diagram-container">
+        <h2 class="diagram-title">
+            <span class="number">6</span>
+            Architecture Overview (ASCII Reference)
+        </h2>
+        <div class="ascii-diagram">
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                              CodeVision AI                                   │
+│                         System Architecture                                  │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                            👤 USER INTERFACE                                 │
+│  ┌─────────────────────────────────────────────────────────────────────┐   │
+│  │                    Web Browser (localhost:8000)                      │   │
+│  └─────────────────────────────────────────────────────────────────────┘   │
+└─────────────────────────────────────────────────────────────────────────────┘
+                                     │
+                                     ▼
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                         📱 FRONTEND (index.html)                             │
+│  ┌───────────────┐  ┌───────────────┐  ┌───────────────┐  ┌─────────────┐  │
+│  │   D3.js       │  │  Mermaid.js   │  │  Chat UI      │  │  Metrics    │  │
+│  │   Tree View   │  │  UML Diagrams │  │  Interface    │  │  Dashboard  │  │
+│  └───────────────┘  └───────────────┘  └───────────────┘  └─────────────┘  │
+└─────────────────────────────────────────────────────────────────────────────┘
+                                     │
+                              HTTP/REST API
+                                     │
+                                     ▼
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                        ⚙️ BACKEND (FastAPI + Python)                         │
+│  ┌─────────────────────────────────────────────────────────────────────┐   │
+│  │                         API Endpoints (9 total)                      │   │
+│  │  POST /api/upload    POST /api/analyze    POST /api/chat            │   │
+│  │  POST /api/github    GET /api/diagram     GET /api/project          │   │
+│  └─────────────────────────────────────────────────────────────────────┘   │
+└─────────────────────────────────────────────────────────────────────────────┘
+                                     │
+                    ┌────────────────┼────────────────┐
+                    ▼                ▼                ▼
+┌─────────────────────┐ ┌─────────────────────┐ ┌─────────────────────┐
+│   📝 PARSERS        │ │   🧠 LLM LAYER      │ │   📊 DIAGRAMS       │
+│                     │ │                     │ │                     │
+│ • Python (AST)      │ │ • LangChain         │ │ • Mermaid           │
+│ • JS/TS (Regex)     │ │ • Prompt Templates  │ │ • PlantUML          │
+│ • 15+ Languages     │ │ • Google Gemini     │ │ • Graphviz DOT      │
+└─────────────────────┘ └─────────────────────┘ └─────────────────────┘
+        </div>
+    </div>
+
+    <!-- File Structure -->
+    <div class="diagram-container">
+        <h2 class="diagram-title">
+            <span class="number">7</span>
+            Project File Structure
+        </h2>
+        <div class="mermaid">
+graph LR
+    Root["📁 codevision-ai/"]
+    
+    Backend["📁 backend/"]
+    Main["📄 main.py<br/><small>629 lines</small>"]
+    
+    Parsers["📁 parsers/"]
+    PyParser["📄 python_parser.py<br/><small>317 lines</small>"]
+    JSParser["📄 javascript_parser.py"]
+    
+    LLM["📁 llm/"]
+    Analyzer["📄 analyzer.py<br/><small>814 lines</small>"]
+    
+    Viz["📁 visualization/"]
+    DiagGen["📄 diagram_generator.py<br/><small>620 lines</small>"]
+    
+    Static["📁 static/"]
+    Index["📄 index.html<br/><small>3300+ lines</small>"]
+    
+    Config["📄 .env, run.py,<br/>requirements.txt"]
+    
+    Root --> Backend
+    Root --> Parsers
+    Root --> LLM
+    Root --> Viz
+    Root --> Static
+    Root --> Config
+    
+    Backend --> Main
+    Parsers --> PyParser
+    Parsers --> JSParser
+    LLM --> Analyzer
+    Viz --> DiagGen
+    Static --> Index
+
+    style Root fill:#7c3aed,color:#fff
+    style Backend fill:#00d4ff,color:#000
+    style Parsers fill:#f472b6,color:#000
+    style LLM fill:#fbbf24,color:#000
+    style Viz fill:#34d399,color:#000
+    style Static fill:#fb923c,color:#000
+        </div>
+    </div>
+
+    <div class="nav-buttons">
+        <button class="nav-btn" onclick="window.print()">🖨️ Print</button>
+        <button class="nav-btn" onclick="window.location.href='slides.html'">📊 Slides</button>
+    </div>
+
+    <script>
+        mermaid.initialize({
+            startOnLoad: true,
+            theme: 'default',
+            securityLevel: 'loose',
+            flowchart: {
+                useMaxWidth: true,
+                htmlLabels: true,
+                curve: 'basis'
+            },
+            sequence: {
+                useMaxWidth: true
+            }
+        });
+    </script>
+</body>
+</html>
+

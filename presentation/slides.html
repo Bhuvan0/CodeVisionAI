@@ -1,0 +1,567 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CodeVision AI - Presentation</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #0f0f23;
+            color: #fff;
+        }
+        
+        .slide {
+            min-height: 100vh;
+            padding: 60px 80px;
+            display: flex;
+            flex-direction: column;
+            border-bottom: 3px solid #6366f1;
+            page-break-after: always;
+        }
+        
+        .slide-number {
+            position: absolute;
+            bottom: 20px;
+            right: 40px;
+            font-size: 14px;
+            color: #6b7280;
+        }
+        
+        h1 {
+            font-size: 48px;
+            color: #6366f1;
+            margin-bottom: 10px;
+        }
+        
+        h2 {
+            font-size: 36px;
+            color: #a5b4fc;
+            margin-bottom: 30px;
+        }
+        
+        h3 {
+            font-size: 28px;
+            color: #c4b5fd;
+            margin: 20px 0 15px 0;
+        }
+        
+        p, li {
+            font-size: 24px;
+            line-height: 1.6;
+            color: #e5e7eb;
+        }
+        
+        ul {
+            margin-left: 40px;
+            margin-bottom: 20px;
+        }
+        
+        li {
+            margin-bottom: 12px;
+        }
+        
+        .highlight {
+            color: #10b981;
+            font-weight: bold;
+        }
+        
+        .emoji {
+            font-size: 32px;
+            margin-right: 10px;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            font-size: 20px;
+        }
+        
+        th, td {
+            padding: 15px 20px;
+            text-align: left;
+            border: 1px solid #374151;
+        }
+        
+        th {
+            background: #6366f1;
+            color: white;
+        }
+        
+        td {
+            background: #1f2937;
+        }
+        
+        tr:nth-child(even) td {
+            background: #111827;
+        }
+        
+        .code-block {
+            background: #1e1e3f;
+            padding: 20px;
+            border-radius: 8px;
+            font-family: 'Consolas', monospace;
+            font-size: 18px;
+            margin: 20px 0;
+            border-left: 4px solid #6366f1;
+            overflow-x: auto;
+        }
+        
+        .architecture-box {
+            background: #1f2937;
+            border: 2px solid #6366f1;
+            border-radius: 12px;
+            padding: 30px;
+            margin: 20px 0;
+            text-align: center;
+        }
+        
+        .quote {
+            font-style: italic;
+            font-size: 28px;
+            color: #a5b4fc;
+            border-left: 4px solid #6366f1;
+            padding-left: 20px;
+            margin: 30px 0;
+        }
+        
+        .two-column {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 40px;
+        }
+        
+        .card {
+            background: #1f2937;
+            border-radius: 12px;
+            padding: 25px;
+            border: 1px solid #374151;
+        }
+        
+        .card h3 {
+            color: #6366f1;
+            margin-top: 0;
+        }
+        
+        .title-slide {
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            background: linear-gradient(135deg, #0f0f23 0%, #1a1a3e 100%);
+        }
+        
+        .title-slide h1 {
+            font-size: 72px;
+            margin-bottom: 20px;
+        }
+        
+        .title-slide h2 {
+            font-size: 32px;
+            font-weight: normal;
+        }
+        
+        .authors {
+            margin-top: 60px;
+            font-size: 24px;
+            color: #9ca3af;
+        }
+        
+        .check {
+            color: #10b981;
+        }
+        
+        .cross {
+            color: #ef4444;
+        }
+        
+        @media print {
+            .slide {
+                page-break-after: always;
+                height: 100vh;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<!-- SLIDE 1: Title -->
+<div class="slide title-slide">
+    <h1>🔮 CodeVision AI</h1>
+    <h2>LLM-Powered Reverse Engineering Tool</h2>
+    <div class="authors">
+        <p><strong>Sri Bhuvan Maddipudi</strong> (G01488473)</p>
+        <p><strong>Srilakshmi Praharshitha Gatta</strong> (G01475844)</p>
+        <p style="margin-top: 30px; color: #6b7280;">December 2024</p>
+    </div>
+</div>
+
+<!-- SLIDE 2: The Problem -->
+<div class="slide">
+    <h1>😫 The Problem</h1>
+    <h2>Understanding Code is Hard</h2>
+    
+    <div class="two-column">
+        <div class="card">
+            <h3>The Challenge</h3>
+            <ul>
+                <li>Joining a new project = <span class="highlight">weeks of reading code</span></li>
+                <li>Legacy codebases have <span class="highlight">no documentation</span></li>
+                <li>Tracing dependencies across <span class="highlight">100+ files</span></li>
+                <li>No way to see the "big picture"</li>
+            </ul>
+        </div>
+        <div class="card">
+            <h3>The Cost</h3>
+            <ul>
+                <li>Developers spend <span class="highlight">~60%</span> of time reading code</li>
+                <li>Average onboarding: <span class="highlight">2-4 weeks</span></li>
+                <li>Lost productivity</li>
+                <li>Frustration & burnout</li>
+            </ul>
+        </div>
+    </div>
+    
+    <div class="quote">
+        "We spend more time reading code than writing it"
+    </div>
+</div>
+
+<!-- SLIDE 3: Our Solution -->
+<div class="slide">
+    <h1>🔮 Our Solution</h1>
+    <h2>CodeVision AI</h2>
+    
+    <h3>What It Does:</h3>
+    <ul>
+        <li><span class="check">✅</span> <strong>Analyzes</strong> entire codebases automatically</li>
+        <li><span class="check">✅</span> <strong>Generates</strong> visual architecture diagrams</li>
+        <li><span class="check">✅</span> <strong>Explains</strong> code in plain English using AI</li>
+        <li><span class="check">✅</span> <strong>Answers</strong> any question about your project</li>
+    </ul>
+    
+    <div class="architecture-box">
+        <p style="font-size: 28px;">
+            <strong>Source Code</strong> → <span style="color: #6366f1;">CodeVision AI</span> → <strong>Visual Diagrams + AI Chat</strong>
+        </p>
+    </div>
+</div>
+
+<!-- SLIDE 4: vs General AI -->
+<div class="slide">
+    <h1>🤖 Why Not Use Claude Code?</h1>
+    <h2>CodeVision AI vs General AI Agents</h2>
+    
+    <table>
+        <tr>
+            <th>Feature</th>
+            <th>Claude Code / Copilot</th>
+            <th>CodeVision AI</th>
+        </tr>
+        <tr>
+            <td><strong>Scope</strong></td>
+            <td><span class="cross">❌</span> ONE file at a time</td>
+            <td><span class="check">✅</span> ENTIRE codebase</td>
+        </tr>
+        <tr>
+            <td><strong>Context</strong></td>
+            <td><span class="cross">❌</span> Limited to current file</td>
+            <td><span class="check">✅</span> All files + relationships</td>
+        </tr>
+        <tr>
+            <td><strong>Output</strong></td>
+            <td><span class="cross">❌</span> Text only</td>
+            <td><span class="check">✅</span> Visual diagrams + chat</td>
+        </tr>
+        <tr>
+            <td><strong>Purpose</strong></td>
+            <td>Code generation</td>
+            <td>Code comprehension</td>
+        </tr>
+    </table>
+    
+    <div class="quote">
+        "Claude Code sees through a keyhole. CodeVision AI gives you the floor plan."
+    </div>
+</div>
+
+<!-- SLIDE 5: Architecture -->
+<div class="slide">
+    <h1>🏗️ System Architecture</h1>
+    <h2>How It's Built</h2>
+    
+    <div class="code-block" style="text-align: center; font-size: 16px;">
+<pre>
+┌─────────────────────────────────────────────────────────────────┐
+│                         FRONTEND                                 │
+│      Vanilla JS  +  D3.js (Tree)  +  Mermaid.js (UML)          │
+└─────────────────────────────────────────────────────────────────┘
+                               │
+                               ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                    BACKEND (FastAPI)                             │
+│                   9 REST API Endpoints                          │
+└─────────────────────────────────────────────────────────────────┘
+                               │
+            ┌──────────────────┼──────────────────┐
+            ▼                  ▼                  ▼
+     ┌───────────┐      ┌───────────┐      ┌───────────┐
+     │  PARSERS  │      │ LLM LAYER │      │ DIAGRAMS  │
+     │           │      │           │      │           │
+     │Python AST │      │ LangChain │      │ Mermaid   │
+     │ JS Regex  │      │  Gemini   │      │ PlantUML  │
+     │15+ langs  │      │           │      │ Graphviz  │
+     └───────────┘      └───────────┘      └───────────┘
+</pre>
+    </div>
+</div>
+
+<!-- SLIDE 6: Technical Stack -->
+<div class="slide">
+    <h1>🔧 Technical Stack</h1>
+    <h2>Technologies Used</h2>
+    
+    <div class="two-column">
+        <div class="card">
+            <h3>Backend</h3>
+            <ul>
+                <li><strong>FastAPI</strong> - Web framework</li>
+                <li><strong>Python 3.10+</strong> - Language</li>
+                <li><strong>Uvicorn</strong> - ASGI server</li>
+                <li><strong>9 REST endpoints</strong></li>
+            </ul>
+        </div>
+        <div class="card">
+            <h3>Frontend</h3>
+            <ul>
+                <li><strong>Vanilla JavaScript</strong></li>
+                <li><strong>D3.js</strong> - Tree visualization</li>
+                <li><strong>Mermaid.js</strong> - UML diagrams</li>
+                <li><strong>CSS Variables</strong> - Theming</li>
+            </ul>
+        </div>
+    </div>
+    
+    <div class="two-column" style="margin-top: 20px;">
+        <div class="card">
+            <h3>AI / LLM</h3>
+            <ul>
+                <li><strong>LangChain</strong> - Orchestration</li>
+                <li><strong>Google Gemini</strong> - LLM</li>
+                <li><strong>Prompt Engineering</strong></li>
+            </ul>
+        </div>
+        <div class="card">
+            <h3>Parsing</h3>
+            <ul>
+                <li><strong>Python AST</strong> - Accurate parsing</li>
+                <li><strong>Regex</strong> - JS/TS parsing</li>
+                <li><strong>15+ languages</strong> supported</li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+<!-- SLIDE 7: How Parsers Work -->
+<div class="slide">
+    <h1>📝 How Parsers Work</h1>
+    <h2>Extracting Code Structure</h2>
+    
+    <div class="two-column">
+        <div class="card">
+            <h3>Python Parser (AST)</h3>
+            <div class="code-block">
+# Uses Python's built-in AST
+tree = ast.parse(source_code)
+
+# Extracts:
+# - Classes & methods
+# - Functions & parameters
+# - Import dependencies
+# - Type hints
+            </div>
+        </div>
+        <div class="card">
+            <h3>JavaScript Parser (Regex)</h3>
+            <div class="code-block">
+// Pattern matching for JS/TS
+pattern = r'class (\w+)'
+
+// Extracts:
+// - ES6 classes
+// - Arrow functions
+// - Import statements
+// - TS interfaces
+            </div>
+        </div>
+    </div>
+    
+    <h3>Supported Languages: <span class="highlight">15+</span></h3>
+    <p>Python, JavaScript, TypeScript, Java, Go, Rust, Ruby, PHP, C#, Swift, C, C++, Kotlin...</p>
+</div>
+
+<!-- SLIDE 8: LLM Integration -->
+<div class="slide">
+    <h1>🧠 LLM Integration</h1>
+    <h2>AI-Powered Analysis</h2>
+    
+    <div class="architecture-box">
+        <p style="font-size: 24px;">
+            <strong>Parsed Data</strong> → <strong>Prompt Template</strong> → <strong>LangChain</strong> → <strong>Google Gemini</strong> → <strong>AI Response</strong>
+        </p>
+    </div>
+    
+    <h3>LLM-Powered Features:</h3>
+    <table>
+        <tr>
+            <th>Feature</th>
+            <th>What It Does</th>
+        </tr>
+        <tr>
+            <td>Module Summaries</td>
+            <td>Explains what each file does in plain English</td>
+        </tr>
+        <tr>
+            <td>Relationship Analysis</td>
+            <td>Identifies patterns, architecture, dependencies</td>
+        </tr>
+        <tr>
+            <td>Project Chat</td>
+            <td>Answers ANY question about the codebase</td>
+        </tr>
+        <tr>
+            <td>Detailed Explanations</td>
+            <td>Deep-dive into specific modules on demand</td>
+        </tr>
+    </table>
+</div>
+
+<!-- SLIDE 9: Demo -->
+<div class="slide">
+    <h1>🎬 Live Demo</h1>
+    <h2>CodeVision AI in Action</h2>
+    
+    <div class="two-column">
+        <div class="card">
+            <h3>Demo Steps:</h3>
+            <ol style="margin-left: 20px; font-size: 22px;">
+                <li style="margin-bottom: 15px;"><strong>Import Project</strong><br>Paste GitHub URL → Clone & Analyze</li>
+                <li style="margin-bottom: 15px;"><strong>Tree Visualization</strong><br>Interactive zoom/pan, click nodes</li>
+                <li style="margin-bottom: 15px;"><strong>UML Diagrams</strong><br>Class diagrams, dependency graphs</li>
+                <li style="margin-bottom: 15px;"><strong>AI Chat</strong><br>"What are the main components?"</li>
+            </ol>
+        </div>
+        <div class="card" style="display: flex; align-items: center; justify-content: center;">
+            <div style="text-align: center;">
+                <p style="font-size: 72px;">🖥️</p>
+                <p style="font-size: 24px; color: #6366f1;">Live Demo</p>
+                <p style="color: #9ca3af;">localhost:8000</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- SLIDE 10: Project Stats -->
+<div class="slide">
+    <h1>📈 Project Statistics</h1>
+    <h2>What We Built</h2>
+    
+    <div class="two-column">
+        <div class="card">
+            <h3>Codebase Size</h3>
+            <table>
+                <tr><td>Backend (Python)</td><td>~2,200 lines</td></tr>
+                <tr><td>Frontend (JS/HTML/CSS)</td><td>~3,300 lines</td></tr>
+                <tr><td><strong>Total</strong></td><td><strong>~5,500 lines</strong></td></tr>
+            </table>
+        </div>
+        <div class="card">
+            <h3>Features</h3>
+            <table>
+                <tr><td>API Endpoints</td><td>9</td></tr>
+                <tr><td>Languages Supported</td><td>15+</td></tr>
+                <tr><td>Diagram Formats</td><td>4</td></tr>
+                <tr><td>LLM Providers</td><td>3</td></tr>
+            </table>
+        </div>
+    </div>
+    
+    <h3>Key Files:</h3>
+    <ul>
+        <li><code>backend/main.py</code> - 629 lines (FastAPI server)</li>
+        <li><code>llm/analyzer.py</code> - 814 lines (LLM integration)</li>
+        <li><code>static/index.html</code> - 3,300+ lines (Frontend SPA)</li>
+    </ul>
+</div>
+
+<!-- SLIDE 11: Repository -->
+<div class="slide">
+    <h1>📂 Source Code</h1>
+    <h2>GitHub Repository</h2>
+    
+    <div class="architecture-box" style="font-size: 36px;">
+        <p>🔗 <strong>github.com/[your-username]/codevision-ai</strong></p>
+    </div>
+    
+    <h3>To Run Locally:</h3>
+    <div class="code-block">
+# Clone the repo
+git clone https://github.com/[username]/codevision-ai.git
+
+# Install dependencies
+pip install -r requirements.txt
+
+# Set up API key
+echo "GOOGLE_API_KEY=your_key" > .env
+
+# Run the server
+python run.py
+
+# Open http://localhost:8000
+    </div>
+</div>
+
+<!-- SLIDE 12: Summary -->
+<div class="slide">
+    <h1>🎯 Summary</h1>
+    <h2>Key Takeaways</h2>
+    
+    <div class="card" style="margin-bottom: 30px;">
+        <h3>What is CodeVision AI?</h3>
+        <p>An LLM-powered tool that helps developers understand unfamiliar codebases through visual diagrams and AI chat.</p>
+    </div>
+    
+    <div class="card" style="margin-bottom: 30px;">
+        <h3>Why is it better than general AI agents?</h3>
+        <p><span class="highlight">Full project context</span>, <span class="highlight">visual output</span>, purpose-built for <span class="highlight">comprehension</span> (not generation).</p>
+    </div>
+    
+    <div class="card">
+        <h3>How is it built?</h3>
+        <p>FastAPI backend + Vanilla JS frontend + LangChain/Gemini for AI + AST/Regex parsers</p>
+    </div>
+</div>
+
+<!-- SLIDE 13: Thank You -->
+<div class="slide title-slide">
+    <h1>🙏 Thank You!</h1>
+    <h2>Questions?</h2>
+    
+    <div class="authors" style="margin-top: 40px;">
+        <p><strong>Sri Bhuvan Maddipudi</strong> (G01488473)</p>
+        <p><strong>Srilakshmi Praharshitha Gatta</strong> (G01475844)</p>
+        <p style="margin-top: 40px; color: #6366f1; font-size: 28px;">
+            📂 github.com/[your-username]/codevision-ai
+        </p>
+    </div>
+</div>
+
+</body>
+</html>
+

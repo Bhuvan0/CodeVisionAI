@@ -1,0 +1,46 @@
+# CodeVision AI - Docker Compose Configuration
+version: '3.8'
+
+services:
+  codevision:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: codevision-ai
+    ports:
+      - "8000:8000"
+    environment:
+      - HOST=0.0.0.0
+      - PORT=8000
+      - DEBUG=false
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - LLM_MODEL=${LLM_MODEL:-claude-3-5-sonnet-20241022}
+    volumes:
+      - ./data:/app/data
+      - codevision-temp:/tmp/codevision
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/docs')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+  # Optional: Redis for caching (uncomment if needed)
+  # redis:
+  #   image: redis:7-alpine
+  #   container_name: codevision-redis
+  #   ports:
+  #     - "6379:6379"
+  #   volumes:
+  #     - redis-data:/data
+  #   restart: unless-stopped
+
+volumes:
+  codevision-temp:
+  # redis-data:
+
+networks:
+  default:
+    name: codevision-network
